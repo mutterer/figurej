@@ -93,7 +93,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener {
 
 	private String title = "Figure J";
-	private String version = "1.01a9";
+	private String version = "1.01b1";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -1464,15 +1464,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		private JTextField scalebarHeight = new JTextField("10");
 		private int[] a = { 1, 2, 5 };
 		private double[] b = { 0.001, 0.01, 0.1, 1, 10, 100, 1000 };
-		// separator color
-		// private boolean changeSeparatorColor = false;
-		// private JButton separatorColorChanger = new JButton(">");
-		// private JTextField colorView = new JTextField("  ");
-		//private JPanel separatorColorPanel = new JPanel(new BorderLayout());
 
 		private AnnotationsAndOptionsPanel(int xLocation, int yLocation) {
-
-			// IJ.addEventListener(this);
 
 			//this.setAlwaysOnTop(true);
 			this.setLocation(xLocation, yLocation);
@@ -1484,17 +1477,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			initScalebarGUI();
 			addOptionsWindowToolTips();
 
-/*			// separator color layout
-			separatorColorPanel.setBorder(BorderFactory
-					.createTitledBorder("Separators"));
-			//outerPanel.setBorder(BorderFactory.createTitledBorder("Active Panel"));
-			separatorColorPanel.setPreferredSize(new Dimension(150, 60));
-
-			separatorColorPanel.add(new JLabel("color"),
-					BorderLayout.WEST);
-			separatorColorPanel.add(colorView, BorderLayout.CENTER);
-			separatorColorPanel.add(separatorColorChanger, BorderLayout.EAST);
-*/			
 			// labels layout
 			JPanel labelsPanel = new JPanel(new GridLayout(3, 2));
 			JPanel labelsOffsets = new JPanel();
@@ -1585,26 +1567,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			pack();
 		}
 
-/*		private void initColorGUI() {
-			separatorColorChanger.setPreferredSize(new Dimension(40, (50)));
-			separatorColorChanger.addActionListener(new ActionListener() {
-				@Override
-				// open a color picker; let user chose a color and close the
-				// picker. use last chosen color
-				public void actionPerformed(ActionEvent arg0) {
-					// open a color picker
-					ColorPicker colorP;
-					if (WindowManager.getFrame("CP") == null)
-						colorP = new ColorPicker();
-					else
-						colorP = (ColorPicker) WindowManager.getFrame("CP");
-					colorP.setVisible(true);
-					SeparatorPanel.setColor(0);
-					changeSeparatorColor = true;
-				}
-			});
-		}
-*/
+
 		/**
 		 * settings of the buttons, combo boxes labels .. handling text label
 		 * design
@@ -1747,9 +1710,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			xOffsScales.setToolTipText("distance to right panel border");
 			yOffsScales.setToolTipText("distance to lower panel border");
 			scalebarHeight.setToolTipText("scalebar height");
-
-// 			separatorColorPanel.setToolTipText("current line color");
-// 			separatorColorChanger.setToolTipText("change line color");
+			changeSeparatorColorButton.setToolTipText("Update separators color to current foreground color");
 		}
 
 		/**
@@ -1773,22 +1734,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			;
 			return i;
 		}
-
-/*		@Override
-		public void eventOccurred(int eventID) {
-			if (eventID == IJEventListener.FOREGROUND_COLOR_CHANGED) {
-				if (changeSeparatorColor) {
-					// int newColor =
-					// Integer.parseInt(IJ.runMacro("fn=\"\"+(getValue('foreground.color'));return fn;"));
-					int newColor = Toolbar.getForegroundColor().getRGB();
-					SeparatorPanel.setColor(newColor);
-					colorView.setBackground(new Color(newColor));
-					if (mainWindow != null)
-						mainWindow.draw();
-				}
-			} else if (eventID == IJEventListener.COLOR_PICKER_CLOSED)
-				changeSeparatorColor = false;
-		}*/
 
 	}
 
