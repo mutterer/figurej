@@ -7,16 +7,12 @@ import ij.WindowManager;
 import ij.gui.Arrow;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
 import ij.io.OpenDialog;
 import ij.plugin.MacroInstaller;
-import ij.plugin.frame.ColorPicker;
-import ij.plugin.frame.Fonts;
 import ij.plugin.frame.PlugInFrame;
 import ij.plugin.frame.Recorder;
-import ij.plugin.frame.RoiManager;
 import ij.plugin.tool.PlugInTool;
 import ij.process.FloatPolygon;
 
@@ -54,7 +50,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -93,20 +88,22 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener {
 
 	private String title = "Figure J";
-	private String version = "1.01b1";
+	private String version = "1.01b3";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
-																	// selection
-																	// tool /
-																	// ROI tool
+	// selection
+	// tool /
+	// ROI tool
 	private MainWindow mainWindow; // result image / panels
-	private FigureControlPanel panelWindow; // control window for the active panel
-	private AnnotationsAndOptionsPanel optionsWindow; // window displaying optional settings
+	private FigureControlPanel panelWindow; // control window for the active
+	// panel
+	private AnnotationsAndOptionsPanel optionsWindow; // window displaying
+	// optional settings
 
 	private ImagePlus openedImage; // image the ROI tool works on
 	private LeafPanel activePanel; // should be a leaf. separators are handled
-									// by the main window itself
+	// by the main window itself
 
 	// click behavior
 	private boolean reactOnRelease = true;
@@ -135,7 +132,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	private DataSource copiedImageData = null;
 	private FloatPolygon roiGeometryOnly;
 
-
 	// controls for the image region selection / ROI tool
 	private JButton imageOKButton;
 	private JButton imageCancelButton;
@@ -151,11 +147,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 	// options
 	private JButton adoptPixelsButton;
-	private JButton changeSeparatorColorButton ;
+	private JButton changeSeparatorColorButton;
 	private JButton printFigure;
 	private JButton drawLabelButton;
 	private JButton removeLabelButton;
-	
+
 	private JButton newTextRoiButton;
 	private JButton newArrowRoiButton;
 	private JButton textOptionsButton;
@@ -164,16 +160,14 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	private JButton duplicateItemButton;
 	private JButton hideOverlayButton;
 	private JButton showOverlayButton;
-	
-	
+
 	// private JButton removeScalebarButton;
 	private LabelDrawer labelDraw = new LabelDrawer();
 
 	// object that controls storing and reopening result images
 	private Serializer serializer = new Serializer();
 
-	// creates macros if opened images are pre-processed by the user (e.g.
-	// changing contrast or LUT)
+	// creates macros if opened images are pre-processed by the user
 	private Recorder recorder;
 
 	public FigureJ_Tool() {
@@ -186,8 +180,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		ImagePlus.addImageListener(this);
 		run("");
 		// add some extra tools to the toolbar.
-		installMacroFromJar ("panel_sticking_Tool.ijm");
-		installMacroFromJar ("insets_Tool.ijm");
+		installMacroFromJar("panel_sticking_Tool.ijm");
+		installMacroFromJar("insets_Tool.ijm");
 	}
 
 	/**
@@ -200,11 +194,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		appNewOpenSaveWindow.setTitle(title);
 		appNewOpenSaveWindow.setLayout(new GridLayout(2, 3));
 		appNewOpenSaveWindow.addWindowListener(new FigureJClosingAdaptor()); // specify
-																	// closing
-																	// behavior
+		// closing
+		// behavior
 		appNewOpenSaveWindow.setLocation(0, 0);
-		appNewOpenSaveWindow.setPreferredSize(new Dimension(200, IJ.getInstance()
-				.getPreferredSize().height));
+		appNewOpenSaveWindow.setPreferredSize(new Dimension(200, IJ
+				.getInstance().getPreferredSize().height));
 
 		// handle the 3 buttons of this window
 		buttonNew = new Button("New");
@@ -221,7 +215,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		appNewOpenSaveWindow.add(buttonOpen);
 		appNewOpenSaveWindow.add(buttonSave);
 		Label l = new Label(version);
-		l.setFont(new Font("sanserif",Font.PLAIN, 9));
+		l.setFont(new Font("sanserif", Font.PLAIN, 9));
 		l.setAlignment(Label.RIGHT);
 		appNewOpenSaveWindow.add(new Label(""));
 		appNewOpenSaveWindow.add(new Label(""));
@@ -249,6 +243,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				|| WindowManager.getCurrentImage() != openedImage) {
 			mainWindowActive = true;
 			mainWindow.mousePressed(imp, e);
+			int count = e.getClickCount();
 			Panel p = mainWindow.getSelectedPanel();
 			// check whether the user selected a leaf or a separator and make
 			// the fitting buttons active (leaf) or not
@@ -258,6 +253,9 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				if (IJ.altKeyDown()) {
 					IJ.log(activePanel.getImgData().createLog());
 				}
+				// from version1b2, double click a panel to open an image.
+				if (count == 2)
+					panelWindow.openTiltedROITool(false);
 			} else {
 				activePanel = null;
 				disableAllPanelWindowButtons(true);
@@ -279,19 +277,20 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	 * of the active panel's window
 	 */
 	@Override
-    public void mouseReleased(ImagePlus imp, MouseEvent e) {
-        if (reactOnRelease) {
-            if (mainWindowActive) {
-                mainWindow.mouseReleased(imp, e);
-                if (activePanel != null) {
-                    panelWindow.updateValues();
-                    IJ.showStatus(activePanel.getScaleBarText());
-                }
-            } else {
-                selectionWindow.mouseReleased(imp, e);
-            }
-        }
-    }
+	public void mouseReleased(ImagePlus imp, MouseEvent e) {
+		if (reactOnRelease) {
+			if (mainWindowActive) {
+				mainWindow.mouseReleased(imp, e);
+				if (activePanel != null) {
+					panelWindow.updateValues();
+					IJ.showStatus(activePanel.getScaleBarText());
+				}
+			} else {
+				selectionWindow.mouseReleased(imp, e);
+			}
+		}
+	}
+
 	public String getToolIcon() {
 		return "CfffF00ff Cf00F50a9 C00fF0a56 Cff0Fbd33 C000 L404f L0444 L09f9 La9af Lacfc Lf0ff";
 	}
@@ -314,7 +313,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	/** handle status of the image buttons */
 	@Override
 	public void imageClosed(ImagePlus img) {
-		
+
 		if (mainWindow != null)
 			// if the ROI tool image is closed activate the main frame; close
 			// the channel selection tool if necessary
@@ -324,14 +323,16 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				if (openedImage.isComposite()
 						&& WindowManager.getFrame("Channels") != null)
 					((PlugInFrame) WindowManager.getFrame("Channels")).close();
-			} else // if the result figure itself is closed ask if the user
-					// wants to store the result
+			} else
+			// if the result figure itself is closed ask if the user
+			// wants to store the result
 			if (img == mainWindow.getImagePlus()) {
-				if (mainWindow.getQuitWithoutSaving()==false)
-						serializer.serialize(mainWindow);
+				if (mainWindow.getQuitWithoutSaving() == false)
+					serializer.serialize(mainWindow);
 				disableAllPanelWindowButtons(true);
-				setOpenNewButtonsStates(true); // allow to open a figure or
-												// create a new one
+				// allow to open a figure or
+				// create a new one
+				setOpenNewButtonsStates(true);
 			}
 		if (optionsWindow != null)
 			optionsWindow.dispose();
@@ -354,7 +355,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 				LeafPanel selectedPanel = (LeafPanel) temp;
 				DataSource imageData = selectedPanel.getImgData();
-				
+
 				// store detailed information about the image the user chose for
 				// a panel
 				imageData.setCoords(xVals, yVals);
@@ -369,15 +370,16 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				imageData.setSlice(openedImage.getSlice());
 				imageData.setChannel(openedImage.getChannel());
 				imageData.setFrame(openedImage.getFrame());
-
+				WindowManager.setTempCurrentImage(openedImage);
 				imageData
 						.setActChs(IJ
 								.runMacro("ch='';if (is('composite')) Stack.getActiveChannels(ch);return ch;"));
 
 				filePathLabel.setText(imageData.getFileDirectory()
 						+ imageData.getFileName());
-				/// TODO: DEBUG FROM HERE
-				/// IJ.log(imageData.getFileDirectory() + imageData.getFileName());
+				// / TODO: DEBUG FROM HERE
+				// / IJ.log(imageData.getFileDirectory() +
+				// imageData.getFileName());
 
 				// FILL THE PANEL with the pixels selected from the image
 				selectedPanel.setPixels(MyImageMath.getPixels(openedImage,
@@ -417,7 +419,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 							.getHeight(), mainWindowXLocation,
 							mainWindowYLocation, dialog.getResolution(), dialog
 									.getSeparatorSize());
-					mainWindow.calibrateImage(dialog.getResolution(),dialog.getUnit());
+					mainWindow.calibrateImage(dialog.getResolution(),
+							dialog.getUnit());
 					Panel p = mainWindow.getSelectedPanel();
 					if (p.getClass().getName()
 							.contains(LeafPanel.class.getName()))
@@ -427,7 +430,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 					if (panelWindow != null)
 						panelWindow.updateValues();
-					
+
 					else
 						panelWindow = new FigureControlPanel();
 					panelWindow.setVisible(true);
@@ -439,8 +442,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		buttonSave.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				IJ.run("Select None"); // assuming the figure is the active
-										// window !! remove the ROI showing
-										// which panel is selected
+				// window !! remove the ROI showing
+				// which panel is selected
 				serializer.serialize(mainWindow);
 				mainWindow.draw(); // show scale bars and labels again
 			}
@@ -453,13 +456,12 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				mainWindow = serializer.deserialize();
 				// if opened successfully
 				if (mainWindow != null) {
-					/*Panel p = mainWindow.getSelectedPanel();
-					if (p.getClass().getName()
-							.contains(LeafPanel.class.getName()))
-						activePanel = (LeafPanel) p;
-					else
-						activePanel = null;
-*/
+					/*
+					 * Panel p = mainWindow.getSelectedPanel(); if
+					 * (p.getClass().getName()
+					 * .contains(LeafPanel.class.getName())) activePanel =
+					 * (LeafPanel) p; else activePanel = null;
+					 */
 					if (panelWindow == null)
 						panelWindow = new FigureControlPanel();
 					else
@@ -583,8 +585,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	/** remove the highlighting of the clicked panel because this could be dragged around e.g. with the arrow tool*/
 	public void eventOccurred(int eventID) {
 		if (eventID == IJEventListener.TOOL_CHANGED) {
-			// if (mainWindow != null)
-			// mainWindow.hideROI();
 			if (mainWindow != null && mainWindow.getImagePlus() != null)
 				mainWindow.getImagePlus().changes = false;
 		}
@@ -601,28 +601,30 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	 */
 	public class FigureJClosingAdaptor extends WindowAdapter {
 		public void windowClosing(WindowEvent wEvent) {
-			String info="";
-			if (mainWindow !=null ) {
-				if (mainWindow.getImagePlus().changes) 
-					info="\nCurrent figure will be lost.";
-            GenericDialog gd = new GenericDialog("FigureJ");
-            gd.addMessage("Are you sure you want to quit FigureJ?"+info);
-            gd.showDialog();
-            if (gd.wasCanceled()) return;
+			String info = "";
+			if (mainWindow != null) {
+				if (mainWindow.getImagePlus().changes)
+					info = "\nCurrent figure will be lost.";
+				GenericDialog gd = new GenericDialog("FigureJ");
+				gd.addMessage("Are you sure you want to quit FigureJ?" + info);
+				gd.showDialog();
+				if (gd.wasCanceled())
+					return;
 			}
-			if (mainWindow !=null ) mainWindow.setQuitWithoutSaving(true);
+			if (mainWindow != null)
+				mainWindow.setQuitWithoutSaving(true);
 			wEvent.getWindow().dispose();
 			appNewOpenSaveWindow.dispose();
 
 			IJ.setTool("rectangle");
-			
+
 			if (panelWindow != null)
 				panelWindow.dispose();
-			
+
 			// application closed just after opening
 			if (mainWindow != null && mainWindow.getImagePlus() != null)
 				mainWindow.getImagePlus().close();
-			
+
 			if (optionsWindow != null)
 				optionsWindow.dispose();
 		}
@@ -630,6 +632,19 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		public void windowClosed(WindowEvent e) {
 			WindowManager.removeWindow((Frame) appNewOpenSaveWindow);
 			Toolbar.restoreTools();
+
+		}
+	}
+
+	/**
+	 * specify the closing behavior of the selecion window
+	 */
+	public class SelectionWindowClosingAdaptor extends WindowAdapter {
+		public void windowClosing(WindowEvent wEvent) {
+			cleanGUIandTransferROI();
+		}
+
+		public void windowClosed(WindowEvent e) {
 
 		}
 	}
@@ -653,10 +668,10 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			// build GUI
 			this.setTitle("Figure Control");
 			this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-			this.setLocation(0,
-					appNewOpenSaveWindow.getHeight()
-							+ appNewOpenSaveWindow.getLocation().y + guiBorder);
-			if (activePanel !=null) data = activePanel.getImgData();
+			this.setLocation(0, appNewOpenSaveWindow.getHeight()
+					+ appNewOpenSaveWindow.getLocation().y + guiBorder);
+			if (activePanel != null)
+				data = activePanel.getImgData();
 
 			setButtons();
 			showPanelCoordinates();
@@ -665,20 +680,13 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 			setGUIImageFrameValues();
 			setNotesListener();
-			// for demo make it look more compact
-			// this.setPreferredSize(panelDimension);
+
 			this.add(cellInit(), BorderLayout.NORTH);
 			this.add(imageInit(), BorderLayout.CENTER);
 
-			
-			if (Prefs.get("figurej.externalTools", 0)==1)
+			if (Prefs.get("figurej.externalTools", 0) == 1)
 				this.add(new PluginPanel(mainWindow), BorderLayout.SOUTH);
 
-//			if (IJ.isMacintosh())
-//				try {
-//					UIManager.setLookAndFeel("com.apple.laf.AquaLookAndFeel"); // FIXME or forget about
-//				} catch (Exception e) {
-//				}
 			this.setBackground(new Color(backgroundColor));
 			this.pack();
 			this.setVisible(true);
@@ -689,18 +697,20 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			data = activePanel.getImgData();
 			showPanelCoordinates();
 			setGUIImageFrameValues();
-			if (optionsWindow!=null) optionsWindow.scaleDisplayCheck.setSelected(activePanel.isScalebarVisible());
+			if (optionsWindow != null)
+				optionsWindow.scaleDisplayCheck.setSelected(activePanel
+						.isScalebarVisible());
 		}
 
 		/**
 		 * displays the coordinates of the selected panel in the lower line of
- 		 * the imageJ main window
+		 * the imageJ main window
 		 */
 		private void showPanelCoordinates() {
-			if (activePanel!=null)
+			if (activePanel != null)
 				IJ.showStatus("x=" + activePanel.getX() + ", y="
-					+ activePanel.getY() + ", w=" + activePanel.getW() + ", h="
-					+ activePanel.getH());
+						+ activePanel.getY() + ", w=" + activePanel.getW()
+						+ ", h=" + activePanel.getH());
 		}
 
 		/** arrange the upper buttons which control a panel (split e.g.) */
@@ -716,7 +726,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 			cellPanel.add(splitNr);
 			// if (Prefs.get("figurej.debug", 0)==1) cellPanel.add(debugButton);
-			
+
 			return cellPanel;
 		}
 
@@ -740,7 +750,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			p1.add(filePathLabel);
 			p2.add(new JLabel("notes:"));
 			filePathLabel.setEditable(false);
-			// filePathLabel.setBackground(new Color(0xededed));
 
 			filePathLabel.setColumns(15);
 
@@ -808,11 +817,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 		/** show image path and image notes on the GUI */
 		private void setGUIImageFrameValues() {
-			if (data!=null) {
-			if (data.getFileDirectory() != "")
-				filePathLabel.setText(data.getFileDirectory()
-						+ data.getFileName());
-			notes.setText(data.getNotes());
+			if (data != null) {
+				if (data.getFileDirectory() != "")
+					filePathLabel.setText(data.getFileDirectory()
+							+ data.getFileName());
+				notes.setText(data.getNotes());
 			}
 		}
 
@@ -846,20 +855,20 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			logoButton = new JButton();
 			logoButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					// IJ.showMessage("FigureJ", "Easy article figures with FigureJ\n \nJerome Mutterer & Edda Zinck\nCNRS, 2012.");
 					Link.runMyMacroFromJar("figurej_help.ijm", "");
 				}
 			});
 
-			optionsButton = new JButton("more"+new Character((char) 8230));
+			optionsButton = new JButton("more" + new Character((char) 8230));
 			optionsButton.setPreferredSize(getMinimumSize());
 			optionsButton.addActionListener(new ActionListener() {
 				// display options window
 				public void actionPerformed(ActionEvent e) {
 					if (optionsWindow == null)
-						optionsWindow = new AnnotationsAndOptionsPanel(optionsButton
-								.getLocation().x + 50, getLocation().y
-								+ optionsButton.getLocation().y + 30);
+						optionsWindow = new AnnotationsAndOptionsPanel(
+								optionsButton.getLocation().x + 50,
+								getLocation().y + optionsButton.getLocation().y
+										+ 30);
 					optionsWindow.setVisible(true);
 				}
 			});
@@ -900,62 +909,66 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				public void actionPerformed(ActionEvent e) {
 					int newColor = Toolbar.getForegroundColor().getRGB();
 					SeparatorPanel.setColor(newColor);
-					if (mainWindow != null)	
+					if (mainWindow != null)
 						mainWindow.draw();
 				}
 			});
 
-
-			
-			newTextRoiButton = new JButton(""+new Character((char) 8314)+" T  text");
+			newTextRoiButton = new JButton("" + new Character((char) 8314)
+					+ " T  text");
 			newTextRoiButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					IJ.selectWindow("FigureJ");
-					String macro ="setTool('rectangle'); setFont('user'); makeText('Text',getWidth/2,getHeight/2);";
+					String macro = "setTool('rectangle'); setFont('user'); makeText('Text',getWidth/2,getHeight/2);";
 					IJ.runMacro(macro);
-					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts")!=null;
+					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts") != null;
 					if (!fontsWindowsOpen) {
 						IJ.run("Fonts...");
 						IJ.selectWindow("FigureJ");
 					}
-					}
+				}
 			});
 
-			textOptionsButton = new JButton(""+new Character((char) 8230));
+			textOptionsButton = new JButton("" + new Character((char) 8230));
 			textOptionsButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					IJ.run("Fonts...");
 				}
 			});
 
-			
-			newArrowRoiButton = new JButton(""+new Character((char) 8314)+new Character((char) 8599)+" arrow");
+			newArrowRoiButton = new JButton("" + new Character((char) 8314)
+					+ new Character((char) 8599) + " arrow");
 			newArrowRoiButton.addActionListener(new ActionListener() {
 				@SuppressWarnings("static-access")
 				public void actionPerformed(ActionEvent e) {
 					ImagePlus imp = IJ.getImage();
-					if (imp!=null) {
-					IJ.setTool("arrow");
-					Arrow a = new Arrow(imp.getWidth()/4,imp.getHeight()/4,imp.getWidth()/2,imp.getHeight()/2);
-					a.setStrokeWidth(Prefs.get("arrow.width",1));
-					a.setDoubleHeaded(Prefs.get("arrow.double",false));
-					a.setHeadSize(Prefs.get("arrow.size",1));
-					a.setStyle((int) Prefs.get("arrow.style",1));
-					a.setOutline(Prefs.get("arrow.outline",false));
-					a.setColor(Toolbar.getForegroundColor());
-					imp.setRoi(a);
+					if (imp != null) {
+						IJ.setTool("arrow");
+						Arrow a = new Arrow(imp.getWidth() / 4,
+								imp.getHeight() / 4, imp.getWidth() / 2, imp
+										.getHeight() / 2);
+						a.setStrokeWidth(Prefs.get("arrow.width", 1));
+						a.setDoubleHeaded(Prefs.get("arrow.double", false));
+						a.setHeadSize(Prefs.get("arrow.size", 1));
+						a.setStyle((int) Prefs.get("arrow.style", 1));
+						a.setOutline(Prefs.get("arrow.outline", false));
+						a.setColor(Toolbar.getForegroundColor());
+						imp.setRoi(a);
 					}
 					Window fr[] = Window.getWindows();
 					boolean arrowsOptionsOpen = false;
 					for (int i = 0; i < fr.length; i++) {
-					if (fr[i].toString().indexOf("Arrow Tool")>0 && fr[i].isVisible()) arrowsOptionsOpen=true;
+						if (fr[i].toString().indexOf("Arrow Tool") > 0
+								&& fr[i].isVisible())
+							arrowsOptionsOpen = true;
 					}
-					if (!arrowsOptionsOpen) IJ.doCommand("Arrow Tool...");
+					if (!arrowsOptionsOpen)
+						IJ.doCommand("Arrow Tool...");
 				}
-				
-				});
-			
-			arrowOptionsButton = new JButton(""+new Character((char) 8230));
+
+			});
+
+			arrowOptionsButton = new JButton("" + new Character((char) 8230));
 			arrowOptionsButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					IJ.doCommand("Arrow Tool...");
@@ -965,7 +978,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			addItemToOverlayButton = new JButton("add");
 			addItemToOverlayButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					String macro ="fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');";
+					String macro = "fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');";
 					IJ.runMacro(macro);
 				}
 			});
@@ -974,13 +987,13 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			duplicateItemButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					ImagePlus imp = IJ.getImage();
-			        Roi roi = imp.getRoi();
-			        if (roi!=null){
-						String macro ="shift=30;getSelectionBounds(x, y, width, height);"
-								+"fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');"
-								+"run('Select None');run('Restore Selection', '');setSelectionLocation(x+ shift, y+ shift/1.5);";	
+					Roi roi = imp.getRoi();
+					if (roi != null) {
+						String macro = "shift=30;getSelectionBounds(x, y, width, height);"
+								+ "fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');"
+								+ "run('Select None');run('Restore Selection', '');setSelectionLocation(x+ shift, y+ shift/1.5);";
 						IJ.runMacro(macro);
-			        }
+					}
 				}
 			});
 
@@ -998,7 +1011,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				}
 			});
 
-			
 			printFigure = new JButton("print at actual size");
 			printFigure.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -1008,14 +1020,13 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				}
 			});
 
-
 			drawLabelButton = new JButton("draw");
 			drawLabelButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					// reset flag if alt is pressed, to reset the label counter
 					boolean reset = (e.getModifiers() & ActionEvent.ALT_MASK) != 0;
 					optionsWindow.addPanelLabel(reset);
-					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts")!=null;
+					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts") != null;
 					if (!fontsWindowsOpen) {
 						IJ.run("Fonts...");
 						IJ.selectWindow("FigureJ");
@@ -1126,27 +1137,27 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 				public void actionPerformed(ActionEvent e) {
 					copiedImageData = activePanel.getImgData();
-					
+
 					if ((e.getModifiers() & ActionEvent.ALT_MASK) != 0) {
-						//TODO dump the roitool coordinates to the roi manager.
-						//TODO later use this in the roi tool....
+						// TODO dump the roitool coordinates to the roi manager.
+						// TODO later use this in the roi tool....
 						// was suggested by ton timmers.
 						// * suggested workflow:
-						// * on figure panel, alt-copy copies source region roi only
-						// * then upon alt open or (alt paste), the new selection tool targets as-similar-as-possible region
+						// * on figure panel, alt-copy copies source region roi
+						// only
+						// * then upon alt open or (alt paste), the new
+						// selection tool targets as-similar-as-possible region
 						// * that could fill the target panel...
-						
+
 						float[] x = new float[copiedImageData.getSourceX().length];
 						float[] y = new float[x.length];
-						for (int i = 0 ; i < x.length; i++)
-						{
-						    x[i] = (float) copiedImageData.getSourceX()[i];
-						    y[i] = (float) copiedImageData.getSourceY()[i];
+						for (int i = 0; i < x.length; i++) {
+							x[i] = (float) copiedImageData.getSourceX()[i];
+							y[i] = (float) copiedImageData.getSourceY()[i];
 						}
-						setRoiGeometryOnly(new FloatPolygon (x, y, 4));
-						// RoiManager.getInstance().addRoi(r);
+						setRoiGeometryOnly(new FloatPolygon(x, y, 4));
 					}
-					
+
 				}
 			});
 
@@ -1156,8 +1167,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				public void actionPerformed(ActionEvent e) {
 					if ((e.getModifiers() & ActionEvent.ALT_MASK) != 0) {
 						openTiltedROITool(true);
-					}
-					else if (copiedImageData != null) {
+					} else if (copiedImageData != null) {
 						activePanel.setImgData(copiedImageData.clone());
 						panelWindow.updateValues();
 						openTiltedROITool(false);
@@ -1186,16 +1196,17 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					mainWindow.draw();
 				}
 			});
-			
-			debugButton =  new JButton("xtra");
+
+			debugButton = new JButton("xtra");
 			debugButton.addActionListener(new ActionListener() {
 				// TEST BUTTON ONLY VISIBLE WHEN FIGUREJ IN DEBUG MODE.
 				public void actionPerformed(ActionEvent e) {
-					mainWindow.getRootPanel().addChild(new LeafPanel(100, 100, 100, 100));
+					mainWindow.getRootPanel().addChild(
+							new LeafPanel(100, 100, 100, 100));
 					mainWindow.draw();
 				}
 			});
-			
+
 		}
 
 		private void addPanelWindowToolTips() {
@@ -1210,8 +1221,10 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			textOptionsButton.setToolTipText("open text options");
 			hideOverlayButton.setToolTipText("hide all overlay items");
 			showOverlayButton.setToolTipText("show all overlay items");
-			addItemToOverlayButton.setToolTipText("add current item to overlay");
-			duplicateItemButton.setToolTipText("add current item to overlay and duplicates it");
+			addItemToOverlayButton
+					.setToolTipText("add current item to overlay");
+			duplicateItemButton
+					.setToolTipText("add current item to overlay and duplicates it");
 			openImageButton
 					.setToolTipText("select an image to fill the panel with");
 			imageOKButton
@@ -1235,26 +1248,21 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					activePanel.getH()); // new tilted rectangle ROI tool
 
 			int nrOfOpenImgs = WindowManager.getImageCount();
-			//IJ.log(activePanel.getImgData().getFileDirectory()+","+activePanel.getImgData().getFileName());
-			//IJ.log(""+(activePanel.getImgData().getFileName().isEmpty()));
-			//IJ.log(""+(activePanel.getImgData().getFileDirectory().isEmpty()));
+			// IJ.log(activePanel.getImgData().getFileDirectory()+","+activePanel.getImgData().getFileName());
+			// IJ.log(""+(activePanel.getImgData().getFileName().isEmpty()));
+			// IJ.log(""+(activePanel.getImgData().getFileDirectory().isEmpty()));
 			if ((activePanel.getImgData().getFileDirectory() == "")
 					|| (activePanel.getImgData().getFileName() == "")
 					|| (activePanel.getImgData().getFileDirectory().isEmpty())
 					|| (activePanel.getImgData().getFileName().isEmpty())
-					
-					) { 
-				/*	
-				if (!selectImage()) { 
-					mainWindowActive = true;
-					setROIToolOpenable(true);
-					return;
-				}*/
-				////
-				OpenDialog opener = new OpenDialog ("Choose an image to fill your panel with!", "");
+
+			) {
+				OpenDialog opener = new OpenDialog(
+						"Choose an image to fill your panel with!", "");
 				if (opener.getFileName() != "") {
-					//IJ.log(opener.getFileName());
-					data.setExternalSource(""); // b/c an new image datasource was just selected.
+					// IJ.log(opener.getFileName());
+					data.setExternalSource(""); // b/c an new image datasource
+					// was just selected.
 					data.setFileDirectory(opener.getDirectory());
 					data.setFileName(opener.getFileName());
 				} else {
@@ -1265,12 +1273,12 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					setROIToolOpenable(true);
 					return;
 				}
-				////
+
 				String path = data.getFileDirectory() + data.getFileName();
-				// IJ.log(path);
-				
-				// TODO improve robustness for complex types, eg. lif datasets as handled by bioformats!!
-				
+
+				// TODO improve robustness for complex types, eg. lif datasets
+				// as handled by bioformats!!
+
 				if (path.toLowerCase().endsWith(".czi")
 						|| path.toLowerCase().endsWith(".zvi")) {
 					try {
@@ -1287,17 +1295,16 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					openedImage = IJ.openImage(path);
 				}
 				if (openedImage == null) {
-					tryToCatchOpenFail(nrOfOpenImgs); // grab files that are
-														// opened, not returned
-														// by opening software
-														// (e.g. old lsm reader)
+					tryToCatchImageOpenFailure(nrOfOpenImgs); // grab files that are
+					// opened, not returned
+					// by opening software
+					// (e.g. old lsm reader)
 				}
 				if (openedImage == null) { // if strange file was selected, go
-											// back to the main window
-					handleImageOpenFail();
+					// back to the main window
+					handleImageOpenFailure();
 					return;
 				}
-				// selectionWindow.init(openedImage);
 
 			} else {
 				String path = activePanel.getImgData().getFileDirectory()
@@ -1320,11 +1327,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				// else open the assigned image and rotate the ROI to its
 				// last angle.
 				if (openedImage == null) {
-					tryToCatchOpenFail(nrOfOpenImgs);
+					tryToCatchImageOpenFailure(nrOfOpenImgs);
 				}
 				if (openedImage == null) { // if strange file was selected, go
 					// back to the main window
-					handleImageOpenFail();
+					handleImageOpenFailure();
 					return;
 				}
 
@@ -1334,55 +1341,49 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			openedImage.show();
 
 			selectionWindow.init(openedImage);
-			
+
 			// use old ROI coordinates if panel size did not change
-			if (data.getSourceX() != null && data.getSourceY() != null) 
+			if (data.getSourceX() != null && data.getSourceY() != null)
 				selectionWindow.setCoords(data.getSourceX(), data.getSourceY());
-			
+
 			// try to use the same roi on different image
 			if (reuseGeometry) {
 				FloatPolygon r = getRoiGeometryOnly();
 				double[] x = new double[4];
 				double[] y = new double[4];
-				for (int i = 0 ; i < x.length; i++)
-				{
-				    x[i] = (double) r.xpoints[i];
-				    y[i] = (double) r.ypoints[i];
+				for (int i = 0; i < x.length; i++) {
+					x[i] = (double) r.xpoints[i];
+					y[i] = (double) r.ypoints[i];
 				}
 
-				selectionWindow.setCoords(x,y);
-				
+				selectionWindow.setCoords(x, y);
+
 			}
 			// channel selector moved from here to below.
 			recorder = new Recorder();
 			recorder.setVisible(false);
 			if (openedImage.getCanvas() == null) {
-				tryToCatchOpenFail(nrOfOpenImgs);
+				tryToCatchImageOpenFailure(nrOfOpenImgs);
 			}
 
 			if (openedImage.getCanvas() == null) { // if trying to open strange
-													// files, e.g. java class
-													// files (the imagePlus
+				// files, e.g. java class
+				// files (the imagePlus
 				// itself != null: do nothing and return to the main window
-				handleImageOpenFail();
+				handleImageOpenFailure();
 				return;
 			}
 			openedImage.getWindow().setLocation(
 					panelDimension.width + guiBorder + 30,
 					appNewOpenSaveWindow.getHeight()
-							+ appNewOpenSaveWindow.getLocation().y + guiBorder + 20);
-			
-//			WindowManager.getCurrentWindow().setLocation(
-//					panelDimension.width + guiBorder + 30,
-//					appNewOpenSaveWindow.getHeight()
-//							+ appNewOpenSaveWindow.getLocation().y + guiBorder + 20);
+							+ appNewOpenSaveWindow.getLocation().y + guiBorder
+							+ 20);
 
+			// removed, we do not want to reapply preprocessing automatically
 			// IJ.runMacro(activePanel.getImgData().getMacro());
 
-			
 			if (openedImage.isComposite()) {
 				IJ.run("Channels Tool...");
-				// WindowManager.getFrame("Channels").setVisible(true);
 				if (data.getActChs() == "")
 					IJ.runMacro("Stack.setDisplayMode('composite');Stack.setActiveChannels('11111111');");
 				else
@@ -1393,10 +1394,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			selectionWindow.drawRect(openedImage); // show ROI
 			activePanel.getImgData().setFileDirectory(data.getFileDirectory());
 			activePanel.getImgData().setFileName(data.getFileName());
-
+			openedImage.getWindow().addWindowListener(
+					new SelectionWindowClosingAdaptor());
 		}
 
-		private void tryToCatchOpenFail(int nrOfOpenImgs) {
+		private void tryToCatchImageOpenFailure(int nrOfOpenImgs) {
 			if (nrOfOpenImgs < 1)
 				return;
 			if (nrOfOpenImgs < WindowManager.getImageCount())
@@ -1407,7 +1409,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		 * show an error message and activate the main frame, reset the paths
 		 * and enable the image open button
 		 */
-		private void handleImageOpenFail() {
+		private void handleImageOpenFailure() {
 			mainWindowActive = true;
 			setROIToolOpenable(true);
 			data.setFileDirectory("");
@@ -1415,34 +1417,12 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			IJ.error("failed to open the image.");
 		}
 
-		/**
-		 * open a file chooser dialog. store the path to the selected file in
-		 * the panel it belongs to. path set to empty string if action canceled.
-		 * 
-		 * @return true if no null path was chosen
-		 */
-		private boolean selectImage() {
-			OpenDialog opener = new OpenDialog(
-					"Choose an image to fill your panel with!", "");
-			if (opener.getFileName() != null) {
-				IJ.log(opener.getFileName());
-				data.setExternalSource(""); // b/c an new image datasource was just selected.
-				data.setFileDirectory(opener.getDirectory());
-				data.setFileName(opener.getFileName());
-				return true;
-			} else {
-				data.setFileDirectory("");
-				data.setFileName("");
-				data.setCoords(new double[4], new double[4]);
-				return false;
-			}
-		}
 	}
 
 	/**
 	 * window opened by the options button of the panel window
 	 */
-	private class AnnotationsAndOptionsPanel extends JFrame  {
+	private class AnnotationsAndOptionsPanel extends JFrame {
 
 		private static final long serialVersionUID = 1L;
 
@@ -1451,7 +1431,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		private JTextField userDefinedLabelsInputField = new JTextField();
 		private JLabel userDefinedLabelsMessage = new JLabel("  own labels:");
 		// arrow 8599 plus superscript 8314
-		// private JButton fontSpecButton = new JButton("fonts"+new Character((char) 8230));
+		// private JButton fontSpecButton = new JButton("fonts"+new
+		// Character((char) 8230));
 		private JTextField xLabelOffset = new JTextField("10");
 		private JTextField yLabelOffset = new JTextField("10");
 		private JComboBox labelPositionSelector = new JComboBox();
@@ -1467,11 +1448,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 		private AnnotationsAndOptionsPanel(int xLocation, int yLocation) {
 
-			//this.setAlwaysOnTop(true);
 			this.setLocation(xLocation, yLocation);
 			this.setTitle("Options");
-			// initColorGUI();
-			// colorView.setEditable(false);
 
 			initLabelGUI();
 			initScalebarGUI();
@@ -1494,16 +1472,16 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 			labelsPanel.add(drawLabelButton);
 			labelsPanel.add(removeLabelButton);
-			//labelsPanel.add(fontSpecButton);
 			labelsPanel.add(labelTypeSelector);
-			//labelsPanel.add(userDefinedLabelsMessage);
 			labelsPanel.add(userDefinedLabelsInputField);
 			labelsPanel.add(labelPositionSelector);
 			labelsPanel.add(labelsOffsets);
 
 			JPanel scalebarsPanel = new JPanel(new GridLayout(2, 1));
-			JPanel scalebarsVisibilityAndSizePanel = new JPanel(new FlowLayout());
-			JPanel scalebarsOffsetsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+			JPanel scalebarsVisibilityAndSizePanel = new JPanel(
+					new FlowLayout());
+			JPanel scalebarsOffsetsPanel = new JPanel(new FlowLayout(
+					FlowLayout.RIGHT));
 
 			scalebarsPanel.setBorder(BorderFactory
 					.createTitledBorder("Panel Scale bars"));
@@ -1515,58 +1493,54 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			scalebarsOffsetsPanel.add(scalebarHeight);
 
 			scalebarsOffsetsPanel.add(new JLabel("   "));
-			scalebarsOffsetsPanel.add(new JLabel(new ImageIcon(getClass().getResource(
-					"/imgs/iconBarRight.png"))));
+			scalebarsOffsetsPanel.add(new JLabel(new ImageIcon(getClass()
+					.getResource("/imgs/iconBarRight.png"))));
 			scalebarsOffsetsPanel.add(xOffsScales);
-			scalebarsOffsetsPanel.add(new JLabel(new ImageIcon(getClass().getResource(
-					"/imgs/iconBarLow.png"))));
+			scalebarsOffsetsPanel.add(new JLabel(new ImageIcon(getClass()
+					.getResource("/imgs/iconBarLow.png"))));
 			scalebarsOffsetsPanel.add(yOffsScales);
-			
 
 			scalebarsPanel.add(scalebarsVisibilityAndSizePanel);
 			scalebarsPanel.add(scalebarsOffsetsPanel);
 
-
 			// Overlay Items
-			
+
 			JPanel overlayItemsPanel = new JPanel(new GridLayout(3, 2));
 			overlayItemsPanel.setPreferredSize(new Dimension(253, 110));
 			overlayItemsPanel.setBorder(BorderFactory
 					.createTitledBorder("Overlay Items"));
 			overlayItemsPanel.add(newTextRoiButton);
-			// overlayItemsPanel.add(textOptionsButton);
 			overlayItemsPanel.add(newArrowRoiButton);
-			// overlayItemsPanel.add(arrowOptionsButton);
 			overlayItemsPanel.add(addItemToOverlayButton);
 			overlayItemsPanel.add(duplicateItemButton);
 			overlayItemsPanel.add(hideOverlayButton);
 			overlayItemsPanel.add(showOverlayButton);
 
 			// Miscellaneous Items and temporary test/debug items
-			
-//			JPanel miscItemsPanel = new JPanel(new GridLayout(2+(int)Prefs.get("figurej.debug", 0), 1));
+
+			// JPanel miscItemsPanel = new JPanel(new
+			// GridLayout(2+(int)Prefs.get("figurej.debug", 0), 1));
 			JPanel miscItemsPanel = new JPanel(new GridLayout(3, 1));
-			miscItemsPanel.setBorder(BorderFactory
-					.createTitledBorder("Misc."));
-			
-			// if (Prefs.get("figurej.debug", 0)==1) miscItemsPanel.add(debugButton);
+			miscItemsPanel.setBorder(BorderFactory.createTitledBorder("Misc."));
+
+			// if (Prefs.get("figurej.debug", 0)==1)
+			// miscItemsPanel.add(debugButton);
 			miscItemsPanel.add(adoptPixelsButton);
 			miscItemsPanel.add(changeSeparatorColorButton);
 			miscItemsPanel.add(printFigure);
 
 			// Fill the options panel
-			optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.PAGE_AXIS));
+			optionsPanel.setLayout(new BoxLayout(optionsPanel,
+					BoxLayout.PAGE_AXIS));
 			optionsPanel.add(labelsPanel);
 			optionsPanel.add(scalebarsPanel);
 			optionsPanel.add(overlayItemsPanel);
-// 			optionsPanel.add(separatorColorPanel);
 			optionsPanel.add(miscItemsPanel);
-			
+
 			this.add(optionsPanel);
 			this.setBackground(new Color(FigureJ_Tool.getBGColor()));
 			pack();
 		}
-
 
 		/**
 		 * settings of the buttons, combo boxes labels .. handling text label
@@ -1595,13 +1569,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 						disableUserDefinedLabelsInputField(true);
 				}
 			});
-
-//			fontSpecButton.addActionListener(new ActionListener() {
-//				@Override
-//				public void actionPerformed(ActionEvent arg0) {
-//					new Fonts();
-//				}
-//			});
 		}
 
 		private void initScalebarGUI() {
@@ -1631,20 +1598,24 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 								.getOverlay());
 						mainWindow.draw();
 					} else {
-						int xOff = stringToNr(xOffsScales, activePanel.getW() / 2);
+						int xOff = stringToNr(xOffsScales,
+								activePanel.getW() / 2);
 						scalebarSizeSlider.setMaximum(activePanel.getW() - xOff);
 						scalebarSizeSlider.setToolTipText("scale bar length");
 						double d = getClosestScaleBar();
-						activePanel.setScalebarColor(Toolbar.getForegroundColor());
-						activePanel.setScalebar(mainWindow.getImagePlus(), xOff,
-								stringToNr(yOffsScales, activePanel.getH() / 2), d,
-								stringToNr(scalebarHeight, 30));
+						activePanel.setScalebarColor(Toolbar
+								.getForegroundColor());
+						activePanel.setScalebar(
+								mainWindow.getImagePlus(),
+								xOff,
+								stringToNr(yOffsScales, activePanel.getH() / 2),
+								d, stringToNr(scalebarHeight, 30));
 						mainWindow.draw();
 						IJ.showStatus(IJ.d2s(d
 								* activePanel.getImgData().getPixelWidth(), 2)
 								+ " " + activePanel.getImgData().getUnit());
 					}
-					
+
 				}
 			});
 		}
@@ -1655,13 +1626,15 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					.equals(LabelType.userDefined.toString()))
 				labelDraw.setUserLabels(userDefinedLabelsInputField.getText());
 
-			String label = labelDraw.getLabel(labelTypeSelector.getSelectedItem()
-					+ "", reset);
-			activePanel.setLabel(mainWindow.getImagePlus(), label,
+			String label = labelDraw.getLabel(
+					labelTypeSelector.getSelectedItem() + "", reset);
+			activePanel.setLabel(
+					mainWindow.getImagePlus(),
+					label,
 					stringToNr(xLabelOffset, activePanel.getW() / 2),
 					stringToNr(yLabelOffset, activePanel.getH() / 2),
-					LabelPosition.valueOf(labelPositionSelector.getSelectedItem() + ""));
-			//mainWindow.draw();
+					LabelPosition.valueOf(labelPositionSelector
+							.getSelectedItem() + ""));
 		}
 
 		/** allow the user to type own label strings in a text field or not */
@@ -1700,9 +1673,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		/** set info messages that pop up if mouse stays longer over a component */
 		private void addOptionsWindowToolTips() {
 			drawLabelButton.setToolTipText("add text label to panel");
-//			removeScalebarButton.setToolTipText("toggles scalebar visibility");
 			removeLabelButton.setToolTipText("delete text label from panel");
-//			fontSpecButton.setToolTipText("change font type, size and style");
 			labelTypeSelector.setToolTipText("choose label type");
 			labelPositionSelector.setToolTipText("choose label position");
 			xLabelOffset.setToolTipText("vertical distance to panel border");
@@ -1710,7 +1681,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			xOffsScales.setToolTipText("distance to right panel border");
 			yOffsScales.setToolTipText("distance to lower panel border");
 			scalebarHeight.setToolTipText("scalebar height");
-			changeSeparatorColorButton.setToolTipText("Update separators color to current foreground color");
+			changeSeparatorColorButton
+					.setToolTipText("Update separators color to current foreground color");
 		}
 
 		/**
@@ -1757,7 +1729,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		String macro = null;
 		try {
 			ClassLoader pcl = IJ.getClassLoader();
-			InputStream is = pcl.getResourceAsStream("macros/"+name);
+			InputStream is = pcl.getResourceAsStream("macros/" + name);
 			if (is == null) {
 				IJ.error("FigureJ installMacroFromJar", "Unable to load \""
 						+ name + "\" from jar file");
@@ -1778,6 +1750,33 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			(new MacroInstaller()).installSingleTool(macro);
 	}
 
+	public void cleanGUIandTransferROI() {
+
+		String recordedMacro = "";
+
+		if (recorder != null) {
+			recordedMacro = recorder.getText();
+			try {
+				recorder.close();
+			} catch (Exception e2) {
+				System.err.println("recorder nullpointer");
+			}
+		}
+
+		// fire custom progress bar b/c some transforms are slow
+		Thread t = new Thread(new CustomProgressBar());
+		t.start();
+		try {
+			transferROIDataToPanel(recordedMacro);
+		} catch (Exception e1) {
+			IJ.error("Could not transform image.\n" + e1.getMessage());
+		}
+		openedImage.close();
+		IJ.run("Select None");
+		t.interrupt();
+		IJ.showStatus("done.");
+	}
+
 	/**
 	 * @return the roiGeometryOnly
 	 */
@@ -1786,7 +1785,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	}
 
 	/**
-	 * @param roiGeometryOnly the roiGeometryOnly to set
+	 * @param roiGeometryOnly
+	 *            the roiGeometryOnly to set
 	 */
 	public void setRoiGeometryOnly(FloatPolygon roiGeometryOnly) {
 		this.roiGeometryOnly = roiGeometryOnly;
