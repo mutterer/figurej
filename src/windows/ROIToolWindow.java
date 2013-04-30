@@ -10,7 +10,14 @@ import ij.gui.Roi;
 import ij.plugin.tool.PlugInTool;
 
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
+import java.net.URL;
+
+import javax.swing.ImageIcon;
 
 /*
  * @author Edda Zinck
@@ -160,6 +167,82 @@ public class ROIToolWindow extends PlugInTool {
 		// IJ.showStatus((medianClick ? "median " : " ") + (cornerClick ?
 		// "corner " : " ") + (inside ? "inside" : "outside"));
 	}
+
+	public void mouseMoved(ImagePlus imp, MouseEvent e) {
+
+		ImageCanvas ic = imp.getCanvas();
+		int x = ic.offScreenX(e.getX());
+		int y = ic.offScreenY(e.getY());
+		x0 = x;
+		y0 = y;
+		// assert rect already exists
+		if (rectRoi != null) {
+
+	
+		// check if clicked inside rectangle
+		boolean inside = rectRoi.contains(x, y);
+		// check if clicked within grab distance of a corner
+		boolean cornerClick = false;
+		for (int i = 0; i < xVals.length; i++) {
+			double d = Math.sqrt((x - xVals[i]) * (x - xVals[i])
+					+ (y - yVals[i]) * (y - yVals[i]));
+			if (d < grabDistance) {
+				cornerClick = true;
+			}
+		}
+		// check if clicked within grab distance of median line and outside
+		boolean handeClick = false;
+		for (int i = 0; i < 4; i++) {
+			double d0 = Math.sqrt((x - xVals[i]) * (x - xVals[i])
+					+ (y - yVals[i]) * (y - yVals[i]));
+			double d1 = Math.sqrt((x - xVals[(i + 1) % 4])
+					* (x - xVals[(i + 1) % 4]) + (y - yVals[(i + 1) % 4])
+					* (y - yVals[(i + 1) % 4]));
+			if (Math.abs(d1 - d0) < grabDistance) {
+				handeClick = !inside;
+			}
+		}
+
+		saveX = xVals.clone();
+		saveY = yVals.clone();
+		// IJ.showStatus((medianClick ? "median " : " ") + (cornerClick ?
+		// "corner " : " ") + (inside ? "inside" : "outside"));
+		if (cornerClick) {
+			switchCursor("Expand.png");
+		} else if (handeClick) {
+			switchCursor("Refresh.png");
+		} else if (inside) {
+			switchCursor("Move.png");
+		} else switchCursor("reset");
+		
+		}
+	}
+	protected static Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+	private void switchCursor(String name) {
+		// separators drag icons credits : http://www.oxygen-icons.org/
+		
+	      if (name == "reset") {
+	         ImageCanvas.setCursor(defaultCursor, 0);
+
+	      } else {
+	         Toolkit toolkit = Toolkit.getDefaultToolkit();
+	         String path = "/imgs/"+name;
+	         URL imageUrl = getClass().getResource(path);
+
+	         ImageIcon icon = new ImageIcon(imageUrl);
+	         Image image = icon.getImage();
+	         if (image == null) {
+	        	 IJ.log("img null");
+	            return;
+	         } else {
+	         int width = icon.getIconWidth();
+	         int height = icon.getIconHeight();
+	         Point hotSpot = new Point(width / 2, height / 2);
+	         Cursor crosshairCursor = toolkit.createCustomCursor(image, hotSpot, name);
+	         ImageCanvas.setCursor(crosshairCursor, 0);
+	         }
+	      }
+	   }
 
 	/** depending on where the user clicked the ROI is scaled, rotated or moved */
 	public void mouseDragged(ImagePlus imp, MouseEvent e) {

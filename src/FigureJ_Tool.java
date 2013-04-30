@@ -316,7 +316,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	public void mouseMoved(ImagePlus imp, MouseEvent e) {
 		if (mainWindowActive) {
 			mainWindow.mouseMoved(imp, e);
-		}
+		} else selectionWindow.mouseMoved(imp, e);
 	}
 
 	public String getToolIcon() {
@@ -437,6 +437,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 						openedImage.getCalibration().getUnit());
 				imageData.setAngle(angle);
 				imageData.setScaleFactor(scaleFactor);
+				// IJ.log(""+Arrays.toString(xVals));
 				mainWindow.draw();
 				mainWindow.getImagePlus().killRoi();
 			}
@@ -1140,30 +1141,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 							&& WindowManager.getFrame("Channels") != null)
 						((PlugInFrame) WindowManager.getFrame("Channels"))
 								.close();
-					String recordedMacro = "";
-
-					if (recorder != null) {
-						recordedMacro = recorder.getText();
-						try {
-							recorder.close();
-						} catch (Exception e2) {
-							System.err.println("recorder nullpointer");
-						}
-					}
-
-					// fire custom progress bar b/c some transforms are slow
-					Thread t = new Thread(new CustomProgressBar());
-					t.start();
-					try {
-						transferROIDataToPanel(recordedMacro);
-					} catch (Exception e1) {
-						IJ.error("Could not transform image.\n"
-								+ e1.getMessage());
-					}
-					openedImage.close();
-					IJ.run("Select None");
-					t.interrupt();
-					IJ.showStatus("done.");
+					cleanGUIandTransferROI();
 				}
 			});
 
@@ -1895,7 +1873,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				System.err.println("recorder nullpointer");
 			}
 		}
-
 		// fire custom progress bar b/c some transforms are slow
 		Thread t = new Thread(new CustomProgressBar());
 		t.start();
@@ -1907,6 +1884,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		openedImage.close();
 		IJ.run("Select None");
 		t.interrupt();
+
 		IJ.showStatus("done.");
 	}
 

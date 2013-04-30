@@ -68,12 +68,15 @@ public class MainWindow extends ImagePlus implements Serializable {
 
 	// last clicked panel
 	private Panel selectedPanel = null;
-	
+
 	private int[] mousePressedPoint = new int[2];
+
 	public int[] getMousePressedPoint() {
 		return mousePressedPoint;
 	}
+
 	private int[] mouseReleasedPoint = new int[2];
+
 	public int[] getMouseReleasedPoint() {
 		return mouseReleasedPoint;
 	}
@@ -122,8 +125,9 @@ public class MainWindow extends ImagePlus implements Serializable {
 	 *            panel tree
 	 */
 	public void init(int frameX, int frameY, int sepSize) {
-//		ImageWindow.centerNextImage(); // gets rid of the image info banner on
-//										// top of the image.
+		// ImageWindow.centerNextImage(); // gets rid of the image info banner
+		// on
+		// // top of the image.
 		ColorProcessor cp = new ColorProcessor(figureWidth, figureHeight);
 		resultFigure = new ImagePlus("FigureJ", cp);
 
@@ -189,9 +193,12 @@ public class MainWindow extends ImagePlus implements Serializable {
 	public void saveImage(String path, String fileName) {
 		System.out.println("saving " + fileName);
 		hideROI();
-		new FileSaver(resultFigure.flatten()).saveAsTiff(path+"FullResolution_"+fileName+".tif");
-		//// new FileSaver(resultFigure.flatten()).saveAsZip(path+"ZIPPED_HIRES_"+fileName+".zip");
-		new FileSaver(resultFigure.flatten()).saveAsJpeg(path+"JpegCompressed_"+fileName+".jpg");
+		new FileSaver(resultFigure.flatten()).saveAsTiff(path
+				+ "FullResolution_" + fileName + ".tif");
+		// // new
+		// FileSaver(resultFigure.flatten()).saveAsZip(path+"ZIPPED_HIRES_"+fileName+".zip");
+		new FileSaver(resultFigure.flatten()).saveAsJpeg(path
+				+ "JpegCompressed_" + fileName + ".jpg");
 	}
 
 	/** @return the last panel the user clicked on */
@@ -225,58 +232,63 @@ public class MainWindow extends ImagePlus implements Serializable {
 		}
 		mousePressedPoint[0] = canv.offScreenX(e.getX());
 		mousePressedPoint[1] = canv.offScreenY(e.getY());
-		
-	
+
 	}
-	
+
 	public void mouseMoved(ImagePlus imp, MouseEvent e) {
 		ImageCanvas canv = imp.getCanvas();
 		Panel hoveredPanel = rootPanel.getClicked(canv.offScreenX(e.getX()),
 				canv.offScreenY(e.getY()), getTol());
+		if (hoveredPanel != null) {
+			if (hoveredPanel.getClass().getName()
+					.contains(LeafPanel.class.getName())) {
+				switchCursor("reset");
+				IJ.showStatus("Double click to associate or open image");
+			} else if (hoveredPanel.getClass().getName()
+					.contains(SeparatorPanel.class.getName())) {
+				if (hoveredPanel.getW() > hoveredPanel.getH()) {
+					switchCursor("Up-down.png");
+				} else {
+					switchCursor("Left-right.png");
+				}
 
-		if (hoveredPanel.getClass().getName().contains(LeafPanel.class.getName())) {
-			switchCursor("reset");
-			IJ.showStatus("Double click to associate or open image");
-		} else if (hoveredPanel.getClass().getName().contains(SeparatorPanel.class.getName())) {
-			if (hoveredPanel.getW()>hoveredPanel.getH()) {
-				switchCursor("v-drag.gif");
+				IJ.showStatus("Drag to adjust");
+
 			} else {
-				switchCursor("h-drag.gif");
+				IJ.showStatus("");
 			}
-
-			IJ.showStatus("Drag to adjust");
-			
-		} else {
-			IJ.showStatus("");
 		}
-		
+
 	}
+
 	protected static Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+
 	private void switchCursor(String name) {
 		// separators drag icons credits : http://www.oxygen-icons.org/
-		
-	      if (name == "reset") {
-	         ImageCanvas.setCursor(defaultCursor, 0);
 
-	      } else {
-	         Toolkit toolkit = Toolkit.getDefaultToolkit();
-	         String path = "/imgs/"+name;
-	         URL imageUrl = getClass().getResource(path);
+		if (name == "reset") {
+			ImageCanvas.setCursor(defaultCursor, 0);
 
-	         ImageIcon icon = new ImageIcon(imageUrl);
-	         Image image = icon.getImage();
-	         if (image == null) {
-	            return;
-	         }
-	         int width = icon.getIconWidth();
-	         int height = icon.getIconHeight();
-	         Point hotSpot = new Point(width / 2, height / 2);
-	         Cursor crosshairCursor = toolkit.createCustomCursor(image, hotSpot, name);
-	         ImageCanvas.setCursor(crosshairCursor, 0);
-	      }
-	   }
+		} else {
+			Toolkit toolkit = Toolkit.getDefaultToolkit();
+			String path = "/imgs/" + name;
+			URL imageUrl = getClass().getResource(path);
 
-
+			ImageIcon icon = new ImageIcon(imageUrl);
+			Image image = icon.getImage();
+			if (image == null) {
+				IJ.log("img null");
+				return;
+			} else {
+				int width = icon.getIconWidth();
+				int height = icon.getIconHeight();
+				Point hotSpot = new Point(width / 2, height / 2);
+				Cursor crosshairCursor = toolkit.createCustomCursor(image,
+						hotSpot, name);
+				ImageCanvas.setCursor(crosshairCursor, 0);
+			}
+		}
+	}
 
 	/**
 	 * set that panel as active that fits to the coordinates of the last click
@@ -309,9 +321,9 @@ public class MainWindow extends ImagePlus implements Serializable {
 	}
 
 	/**
-	 * @return distance which is added to separators so that they can get clicked
-	 *         also if they are very thin depends on zoom factor and result
-	 *         image size
+	 * @return distance which is added to separators so that they can get
+	 *         clicked also if they are very thin depends on zoom factor and
+	 *         result image size
 	 */
 	private int getTol() {
 		return (int) (clickTolerance / resultFigure.getCanvas()
@@ -478,6 +490,5 @@ public class MainWindow extends ImagePlus implements Serializable {
 	public void setCal(Calibration c) {
 		this.resultFigure.setCalibration(c);
 	}
-
 
 }
