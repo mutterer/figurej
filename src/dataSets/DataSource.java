@@ -25,6 +25,15 @@ public class DataSource implements Serializable{
 	private String 		notes = "";	
 	public final String defaultNote = "<my image notes>";
 
+	// selected serie from multiseries file formats, like *.lif files
+	private int 		selectedSerie;
+	public int getSelectedSerie() {
+		return selectedSerie;
+	}
+
+	public void setSelectedSerie(int selectedSerie) {
+		this.selectedSerie = selectedSerie;
+	}
 	// position of the selected image in a multi channel or stack like image
 	private int 		selectedChannel;
 	private int 		selectedSlice;
@@ -35,6 +44,11 @@ public class DataSource implements Serializable{
 	// calibration info
 	private double 		pixelWidth = 1.0;
 	private String		calbirationUnit = "pixel";
+	
+	// transform info
+	private double 		angle = 0.0;
+	private double 		scaleFactor = 1.0;
+	
 	
 	// label info
 	private String		label = "";
@@ -99,13 +113,6 @@ public class DataSource implements Serializable{
 	/**@return y coordinates of the rectangle image region that was selected to fill the panel the dataSource object belongs to with */
 	public double[] getSourceY() {
 		return sourceY;
-	}
-	/**@return the tilting angle of the ROI tool rectangle used to select an image region */
-	public double getAngle() {
-		double d = Math.atan((sourceY[3]-sourceY[0])/(sourceX[3]-sourceX[0]))*180/Math.PI;
-		if(sourceX[3]<sourceX[0])
-			d += 180;
-		return d;
 	}
 	/**@return pixel width in @see getUnit() units */
 	public double getPixelWidth() {
@@ -233,6 +240,9 @@ public class DataSource implements Serializable{
 		newDS.activeChannels  = this.activeChannels;
 		newDS.actChs  		  = this.actChs;
 
+		newDS.angle  		  = this.angle;
+		newDS.scaleFactor  		  = this.scaleFactor;
+
 		newDS.pixelWidth	= this.pixelWidth;
 		newDS.calbirationUnit			= this.calbirationUnit;
 
@@ -244,5 +254,21 @@ public class DataSource implements Serializable{
 	}
 	public String getExternalSource() {
 		return this.externalSource;	
+	}
+
+	public double getAngle() {
+		return angle;
+	}
+
+	public void setAngle(double angle) {
+		this.angle = angle;
+	}
+
+	public double getScaleFactor() {
+		return scaleFactor;
+	}
+
+	public void setScaleFactor(double scaleFactor) {
+		this.scaleFactor = scaleFactor;
 	}
 }

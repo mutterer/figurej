@@ -7,6 +7,7 @@ import ij.WindowManager;
 import ij.gui.Arrow;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
 import ij.io.OpenDialog;
@@ -15,6 +16,7 @@ import ij.plugin.frame.PlugInFrame;
 import ij.plugin.frame.Recorder;
 import ij.plugin.tool.PlugInTool;
 import ij.process.FloatPolygon;
+import imagescience.transform.Affine;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -25,6 +27,7 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Label;
+import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -57,6 +60,9 @@ import javax.swing.event.DocumentListener;
 
 import loci.formats.FormatException;
 import loci.plugins.BF;
+import loci.plugins.in.ImportProcess;
+import loci.plugins.in.ImporterOptions;
+import loci.plugins.in.ImporterPrompter;
 import plugIns.LabelDrawer;
 import plugIns.Link;
 import treeMap.LeafPanel;
@@ -88,7 +94,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener {
 
 	private String title = "Figure J";
-	private String version = "1.01b3";
+	private String version = "1.02";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -134,7 +140,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 	// controls for the image region selection / ROI tool
 	private JButton imageOKButton;
-	private JButton imageCancelButton;
+	public JButton imageCancelButton;
 	private JButton openImageButton;
 	private JButton logoButton;
 
@@ -260,8 +266,13 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				activePanel = null;
 				disableAllPanelWindowButtons(true);
 			}
-		} else
-			selectionWindow.mousePressed(imp, e);
+		} else {
+			int count = e.getClickCount();
+			if (count == 2) {
+				cleanGUIandTransferROI();
+			} else
+				selectionWindow.mousePressed(imp, e);
+		}
 	}
 
 	/** calls either the dragging method of the main window or the ROI tool */
@@ -281,13 +292,30 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		if (reactOnRelease) {
 			if (mainWindowActive) {
 				mainWindow.mouseReleased(imp, e);
+
 				if (activePanel != null) {
+					Point a = new Point(mainWindow.getMousePressedPoint()[0],
+							mainWindow.getMousePressedPoint()[1]);
+					Point b = new Point(mainWindow.getMouseReleasedPoint()[0],
+							mainWindow.getMouseReleasedPoint()[1]);
+					Line l = new Line(a.x, a.y, b.x, b.y);
+					boolean horizontalDrag = (b.x - a.x) * (b.x - a.x) > (b.y - a.y)
+							* (b.y - a.y);
+					if (l.getRawLength() > 20)
+						activePanel.split(2, horizontalDrag);
+					mainWindow.draw();
 					panelWindow.updateValues();
 					IJ.showStatus(activePanel.getScaleBarText());
 				}
 			} else {
 				selectionWindow.mouseReleased(imp, e);
 			}
+		}
+	}
+
+	public void mouseMoved(ImagePlus imp, MouseEvent e) {
+		if (mainWindowActive) {
+			mainWindow.mouseMoved(imp, e);
 		}
 	}
 
@@ -381,23 +409,59 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				// / IJ.log(imageData.getFileDirectory() +
 				// imageData.getFileName());
 
+				float[] xRect = new float[xVals.length];
+				float[] yRect = new float[xVals.length];
+
+				for (int i = 0; i < xRect.length; i++) {
+					xRect[i] = (float) xVals[i];
+					yRect[i] = (float) yVals[i];
+				}
+
+				PolygonRoi boundingRect = new PolygonRoi(new FloatPolygon(
+						xRect, yRect), PolygonRoi.POLYGON);
+
+				double angle = Math.atan((yVals[3] - yVals[0])
+						/ (xVals[3] - xVals[0]))
+						* 180 / Math.PI + ((xVals[3] < xVals[0]) ? 180 : 0);
+
+				Line top = new Line(xVals[0], yVals[0], xVals[3], yVals[3]);
+				double scaleFactor = selectedPanel.getW() / top.getRawLength();
+
 				// FILL THE PANEL with the pixels selected from the image
 				selectedPanel.setPixels(MyImageMath.getPixels(openedImage,
-						xVals, yVals, selectedPanel.getW(),
-						selectedPanel.getH(),
-						(String) interpolationType.getSelectedItem()));
+						boundingRect, angle, scaleFactor, selectedPanel.getW(),
+						selectedPanel.getH(), getSelectedInterpolation()));
 				// calculate the calibration
-				Line top = new Line(xVals[0], yVals[0], xVals[3], yVals[3]);
-				double factor = top.getRawLength() / selectedPanel.getW();
 				imageData.setPixelCalibration(
-						factor * openedImage.getCalibration().pixelWidth,
+						(1/scaleFactor) * openedImage.getCalibration().pixelWidth,
 						openedImage.getCalibration().getUnit());
+				imageData.setAngle(angle);
+				imageData.setScaleFactor(scaleFactor);
 				mainWindow.draw();
+				mainWindow.getImagePlus().killRoi();
 			}
 
 		setROIToolOpenable(true);
 		setControlFrameButtonStates(true);
 		mainWindowActive = true;
+	}
+
+	private int getSelectedInterpolation() {
+		String interpolation = (String) interpolationType.getSelectedItem();
+		int interpolationScheme = Affine.BSPLINE5;
+		if (interpolation.equals("nearest neighbor"))
+			interpolationScheme = Affine.NEAREST;
+		else if (interpolation.equals("linear"))
+			interpolationScheme = Affine.LINEAR;
+		else if (interpolation.equals("cubic convolution"))
+			interpolationScheme = Affine.CUBIC;
+		else if (interpolation.equals("cubic B-spline"))
+			interpolationScheme = Affine.BSPLINE3;
+		else if (interpolation.equals("cubic O-MOMS"))
+			interpolationScheme = Affine.OMOMS3;
+		else if (interpolation.equals("quintic B-spline"))
+			interpolationScheme = Affine.BSPLINE5;
+		return interpolationScheme;
 	}
 
 	private void setupButtonsActions() {
@@ -641,7 +705,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	 */
 	public class SelectionWindowClosingAdaptor extends WindowAdapter {
 		public void windowClosing(WindowEvent wEvent) {
-			cleanGUIandTransferROI();
+			// cleanGUIandTransferROI();
+			imageCancelButton.doClick();
 		}
 
 		public void windowClosed(WindowEvent e) {
@@ -808,11 +873,22 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			splitNr.setSelectedItem(2);
 
 			interpolationType = new JComboBox();
-			ArrayList<String> l = MyImageMath.getInterpolationTypes();
+			ArrayList<String> l = getInterpolationTypes();
 			Iterator<String> itr = l.iterator();
 			while (itr.hasNext())
 				interpolationType.addItem(itr.next());
 			interpolationType.setSelectedItem("quintic B-spline");
+		}
+
+		private ArrayList<String> getInterpolationTypes() {
+			ArrayList<String> l = new ArrayList<String>();
+			l.add("nearest neighbor");
+			l.add("linear");
+			l.add("cubic convolution");
+			l.add("cubic B-spline");
+			l.add("cubic O-MOMS");
+			l.add("quintic B-spline");
+			return l;
 		}
 
 		/** show image path and image notes on the GUI */
@@ -1291,11 +1367,45 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 						e.printStackTrace();
 						IJ.log("Bioformats had problems reading this file.");
 					}
+				} else if (path.toLowerCase().endsWith(".lif")) {
+
+					try {
+						ImporterOptions options = new ImporterOptions();
+						options.setId(path);
+						options.setFirstTime(false);
+						options.setUpgradeCheck(false);
+						options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
+						ImportProcess process = new ImportProcess(options);
+						new ImporterPrompter(process);
+						process.execute();
+						options = process.getOptions();
+						options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
+
+						int count = process.getSeriesCount();
+						int selectedSerie = 0;
+						for (int i = 0; i < count; i++) {
+							if (options.isSeriesOn(i))
+								selectedSerie = i;
+						}
+
+						data.setSelectedSerie(selectedSerie);
+						IJ.log("" + selectedSerie);
+						ImagePlus[] imps = BF.openImagePlus(options);
+						openedImage = imps[imps.length - 1];
+					} catch (FormatException e) {
+						e.printStackTrace();
+						IJ.log("Bioformats had problems reading this file.");
+					} catch (IOException e) {
+						e.printStackTrace();
+						IJ.log("Bioformats had problems reading this file.");
+					}
+
 				} else {
 					openedImage = IJ.openImage(path);
 				}
 				if (openedImage == null) {
-					tryToCatchImageOpenFailure(nrOfOpenImgs); // grab files that are
+					tryToCatchImageOpenFailure(nrOfOpenImgs); // grab files that
+																// are
 					// opened, not returned
 					// by opening software
 					// (e.g. old lsm reader)
@@ -1321,6 +1431,27 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 						e.printStackTrace();
 						IJ.log("Bioformats has issues reading this file.");
 					}
+				} else if (path.toLowerCase().endsWith(".lif")) {
+
+					try {
+						ImporterOptions options = new ImporterOptions();
+						options.setId(path);
+						options.setFirstTime(false);
+						options.setUpgradeCheck(false);
+						options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
+						options.clearSeries();
+						options.setSeriesOn(activePanel.getImgData()
+								.getSelectedSerie(), true);
+						ImagePlus[] imps = BF.openImagePlus(options);
+						openedImage = imps[imps.length - 1];
+					} catch (FormatException e) {
+						e.printStackTrace();
+						IJ.log("Bioformats had problems reading this file.");
+					} catch (IOException e) {
+						e.printStackTrace();
+						IJ.log("Bioformats had problems reading this file.");
+					}
+
 				} else {
 					openedImage = IJ.openImage(path);
 				}
@@ -1359,9 +1490,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				selectionWindow.setCoords(x, y);
 
 			}
-			// channel selector moved from here to below.
-			recorder = new Recorder();
-			recorder.setVisible(false);
+
+			// IJ 1.47o4 introduced a new Recorder constructor: new
+			// Recorder(boolean visible)
+			recorder = new Recorder(false);
+			
 			if (openedImage.getCanvas() == null) {
 				tryToCatchImageOpenFailure(nrOfOpenImgs);
 			}

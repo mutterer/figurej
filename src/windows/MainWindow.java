@@ -17,12 +17,19 @@ import ij.measure.Calibration;
 import ij.plugin.frame.RoiManager;
 import ij.process.ColorProcessor;
 
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.Serializable;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.ImageIcon;
 
 import treeMap.ContainerPanel;
 import treeMap.LeafPanel;
@@ -61,7 +68,15 @@ public class MainWindow extends ImagePlus implements Serializable {
 
 	// last clicked panel
 	private Panel selectedPanel = null;
-	private int[] selectionPos = new int[2];
+	
+	private int[] mousePressedPoint = new int[2];
+	public int[] getMousePressedPoint() {
+		return mousePressedPoint;
+	}
+	private int[] mouseReleasedPoint = new int[2];
+	public int[] getMouseReleasedPoint() {
+		return mouseReleasedPoint;
+	}
 
 	// control snap behavior of dragged separator panels
 	private int lastXSnap = -1;
@@ -136,23 +151,6 @@ public class MainWindow extends ImagePlus implements Serializable {
 
 		Prefs.set("figure.id", resultFigure.getID());
 
-		// moved to a the options panel in a button that starts an external
-		// macro
-		// IJ.run(resultFigure, "Set Scale...",
-		// "distance="+dpi+" known=1 pixel=1 unit=inch");
-		// IJ.run("Page Setup...", "scale=100 center print_actual");
-
-		// TODO add smthg here to the first image if alt is pressed
-		/*
-		 * if (IJ.altKeyDown()){ URL url =
-		 * getClass().getResource("/imgs/whatever.png"); Image image =
-		 * Toolkit.getDefaultToolkit().getImage(url); ImagePlus logo = new
-		 * ImagePlus("logo", image); ImageProcessor ipLogo =
-		 * logo.getProcessor(); processor.copyBits(ipLogo,
-		 * figureWidth/2-ipLogo.getWidth()/2,
-		 * figureHeight/2-ipLogo.getHeight()/2, Blitter.COPY); }
-		 */
-
 		showROI();
 		resultFigure.deleteRoi();
 	}
@@ -225,11 +223,60 @@ public class MainWindow extends ImagePlus implements Serializable {
 			selectedPanel = clickedPanel;
 			showROI();
 		}
-		selectionPos[0] = canv.offScreenX(e.getX());
-		selectionPos[1] = canv.offScreenY(e.getY());
+		mousePressedPoint[0] = canv.offScreenX(e.getX());
+		mousePressedPoint[1] = canv.offScreenY(e.getY());
 		
 	
 	}
+	
+	public void mouseMoved(ImagePlus imp, MouseEvent e) {
+		ImageCanvas canv = imp.getCanvas();
+		Panel hoveredPanel = rootPanel.getClicked(canv.offScreenX(e.getX()),
+				canv.offScreenY(e.getY()), getTol());
+
+		if (hoveredPanel.getClass().getName().contains(LeafPanel.class.getName())) {
+			switchCursor("reset");
+			IJ.showStatus("Double click to associate or open image");
+		} else if (hoveredPanel.getClass().getName().contains(SeparatorPanel.class.getName())) {
+			if (hoveredPanel.getW()>hoveredPanel.getH()) {
+				switchCursor("v-drag.gif");
+			} else {
+				switchCursor("h-drag.gif");
+			}
+
+			IJ.showStatus("Drag to adjust");
+			
+		} else {
+			IJ.showStatus("");
+		}
+		
+	}
+	protected static Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+	private void switchCursor(String name) {
+		// separators drag icons credits : http://www.oxygen-icons.org/
+		
+	      if (name == "reset") {
+	         ImageCanvas.setCursor(defaultCursor, 0);
+
+	      } else {
+	         Toolkit toolkit = Toolkit.getDefaultToolkit();
+	         String path = "/imgs/"+name;
+	         URL imageUrl = getClass().getResource(path);
+
+	         ImageIcon icon = new ImageIcon(imageUrl);
+	         Image image = icon.getImage();
+	         if (image == null) {
+	            return;
+	         }
+	         int width = icon.getIconWidth();
+	         int height = icon.getIconHeight();
+	         Point hotSpot = new Point(width / 2, height / 2);
+	         Cursor crosshairCursor = toolkit.createCustomCursor(image, hotSpot, name);
+	         ImageCanvas.setCursor(crosshairCursor, 0);
+	      }
+	   }
+
+
 
 	/**
 	 * set that panel as active that fits to the coordinates of the last click
@@ -241,11 +288,11 @@ public class MainWindow extends ImagePlus implements Serializable {
 	 */
 	public void updateSelectedPanel(boolean ignoreTolerance) {
 		if (ignoreTolerance)
-			selectedPanel = rootPanel.getClicked(selectionPos[0],
-					selectionPos[1], 0);
+			selectedPanel = rootPanel.getClicked(mousePressedPoint[0],
+					mousePressedPoint[1], 0);
 		else
-			selectedPanel = rootPanel.getClicked(selectionPos[0],
-					selectionPos[1], getTol());
+			selectedPanel = rootPanel.getClicked(mousePressedPoint[0],
+					mousePressedPoint[1], getTol());
 	}
 
 	public void mouseReleased(ImagePlus imp, MouseEvent e) {
@@ -256,6 +303,8 @@ public class MainWindow extends ImagePlus implements Serializable {
 		if ((releasedPanel != null) && (releasedPanel != selectedPanel)) {
 			IJ.showStatus("What did you expect?");
 		}
+		mouseReleasedPoint[0] = canv.offScreenX(e.getX());
+		mouseReleasedPoint[1] = canv.offScreenY(e.getY());
 		showROI();
 	}
 
@@ -429,5 +478,6 @@ public class MainWindow extends ImagePlus implements Serializable {
 	public void setCal(Calibration c) {
 		this.resultFigure.setCalibration(c);
 	}
+
 
 }

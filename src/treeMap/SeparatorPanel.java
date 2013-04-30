@@ -86,8 +86,8 @@ public class SeparatorPanel extends Panel{
 	}
 	@Override
 	public Roi getHighlightROI() {
-		Roi r = new Roi(this.getX(), this.getY(), this.getW(), this.getH());
-		r.setFillColor(Colors.decode("#33ffff00", null));
+		Roi r = new Roi(this.getX(), this.getY(), this.getW()+1, this.getH()+1);
+		r.setFillColor(Colors.decode("#66ff0000", null));
 		return r;
 	}
 	

@@ -84,13 +84,8 @@ public class ROIToolWindow extends PlugInTool {
 		// set size of the ROI
 		double w;
 		double h;
-		if (imp != null) {
-			w = imp.getWidth();
-			h = imp.getHeight();
-		} else {
-			w = horizSize;
-			h = verticSize;
-		}
+		w = imp.getWidth();
+		h = imp.getHeight();
 		// as long as the size of the ROI is too large, make it smaller
 		while (horizSize >= w || verticSize >= h) {
 			horizSize /= 1.5;
