@@ -357,28 +357,13 @@ public class MainWindow extends ImagePlus implements Serializable {
 			int x1 = canv.offScreenX(e.getX());
 			int y1 = canv.offScreenY(e.getY());
 
-			int tempY = rootPanel.getClosestY(selectedPanel, Integer.MAX_VALUE);
-			int tempX = rootPanel.getClosestX(selectedPanel, Integer.MAX_VALUE);
-			int yTemp = y1;
-			int xTemp = x1;
-			// snapping to the closest
-			if (Math.abs(tempY - lastY) > Math.abs(tempY - y1)
-					|| tempY != lastYSnap)
-				if (tempY < Integer.MAX_VALUE) {
-					y1 = tempY;
-					lastYSnap = tempY;
-				}
+			int closestX = rootPanel.getClosestX(selectedPanel, Integer.MAX_VALUE);
+			int closestY = rootPanel.getClosestY(selectedPanel, Integer.MAX_VALUE);
 
-			if (Math.abs(tempX - lastX) > Math.abs(tempX - x1)
-					|| tempX != lastXSnap)
-				if (tempX < Integer.MAX_VALUE) {
-					x1 = tempX;
-					lastXSnap = tempX;
-				}
-
-			lastY = yTemp;
-			lastX = xTemp;
-
+			if (Math.abs(closestX - x1) < SeparatorPanel.snapDist) x1 = closestX;
+			if (Math.abs(closestY - y1) < SeparatorPanel.snapDist) y1 = closestY;
+				
+			
 			selectedPanel.getParent().reShape(x1, y1,
 					(SeparatorPanel) selectedPanel);
 
