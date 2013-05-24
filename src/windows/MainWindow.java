@@ -359,7 +359,7 @@ public class MainWindow extends ImagePlus implements Serializable {
 
 			int closestX = rootPanel.getClosestX(selectedPanel, Integer.MAX_VALUE);
 			int closestY = rootPanel.getClosestY(selectedPanel, Integer.MAX_VALUE);
-
+			
 			if (Math.abs(closestX - x1) < SeparatorPanel.snapDist) x1 = closestX;
 			if (Math.abs(closestY - y1) < SeparatorPanel.snapDist) y1 = closestY;
 				

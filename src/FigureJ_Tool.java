@@ -1102,7 +1102,9 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				public void actionPerformed(ActionEvent e) {
 					// reset flag if alt is pressed, to reset the label counter
 					boolean reset = (e.getModifiers() & ActionEvent.ALT_MASK) != 0;
-					optionsWindow.addPanelLabel(reset);
+					boolean backwards = (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0;
+					
+					optionsWindow.addPanelLabel(reset, backwards);
 					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts") != null;
 					if (!fontsWindowsOpen) {
 						IJ.run("Fonts...");
@@ -1553,6 +1555,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		private JTextField yOffsScales = new JTextField("20");
 		private JSlider scalebarSizeSlider = new JSlider();
 		private JCheckBox scaleDisplayCheck = new JCheckBox();
+		// suggested by Christian Blanck
+		private JCheckBox lockScale = new JCheckBox("Lock pixel size");
 		private JTextField scalebarHeight = new JTextField("10");
 		private int[] a = { 1, 2, 5 };
 		private double[] b = { 0.001, 0.01, 0.1, 1, 10, 100, 1000 };
@@ -1631,11 +1635,15 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 			// JPanel miscItemsPanel = new JPanel(new
 			// GridLayout(2+(int)Prefs.get("figurej.debug", 0), 1));
-			JPanel miscItemsPanel = new JPanel(new GridLayout(3, 1));
+			JPanel miscItemsPanel = new JPanel(new GridLayout(4, 1));
 			miscItemsPanel.setBorder(BorderFactory.createTitledBorder("Misc."));
 
 			// if (Prefs.get("figurej.debug", 0)==1)
 			// miscItemsPanel.add(debugButton);
+			Prefs.set("figurej.lockPixelSize", false);
+
+			// TODO: enable this when workflow is made clear.
+			// miscItemsPanel.add(lockScale);
 			miscItemsPanel.add(adoptPixelsButton);
 			miscItemsPanel.add(changeSeparatorColorButton);
 			miscItemsPanel.add(printFigure);
@@ -1729,16 +1737,33 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 				}
 			});
+			lockScale.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					if (lockScale.isSelected()) {
+						Prefs.set("figurej.lockPixelSize", true);
+						double pixelWidth = activePanel.getImgData().getPixelWidth();
+						Prefs.set("figurej.lockedPixelSize", pixelWidth);
+						lockScale.setText("<html>Lock Pixel size: <font color=red>LOCKED</font></html>");
+
+					} else {
+						Prefs.set("figurej.lockPixelSize", false);
+						lockScale.setText("<html>Lock Pixel size</html>");
+
+					}
+
+				}
+			});
 		}
 
 		/** display a new text label on the active panel */
-		public void addPanelLabel(boolean reset) {
+		public void addPanelLabel(boolean reset, boolean backwards) {
 			if (labelTypeSelector.getSelectedItem().toString()
 					.equals(LabelType.userDefined.toString()))
 				labelDraw.setUserLabels(userDefinedLabelsInputField.getText());
 
 			String label = labelDraw.getLabel(
-					labelTypeSelector.getSelectedItem() + "", reset);
+					labelTypeSelector.getSelectedItem() + "", reset, backwards);
 			activePanel.setLabel(
 					mainWindow.getImagePlus(),
 					label,

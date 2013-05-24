@@ -131,10 +131,10 @@ public class LabelDrawer {
 	/**
 	 * @return next label letter, depending on counter and type set
 	 */
-	public String getLabel(String type, boolean reset) {
+	public String getLabel(String type, boolean reset, boolean backwards) {
 		// if reset flag set, reset the label counter
 		if (reset) counter=-1;
-		counter ++;
+		counter = counter + (backwards?-1:1);
 		if(type.equals(LabelType.ABC+""))
 			return (char)(65+(counter%26))+"";
 		else if(type.equals(LabelType.abc+""))
