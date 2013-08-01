@@ -9,6 +9,7 @@ import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
+import ij.gui.TextRoi;
 import ij.gui.Toolbar;
 import ij.io.OpenDialog;
 import ij.plugin.MacroInstaller;
@@ -94,7 +95,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener {
 
 	private String title = "Figure J";
-	private String version = "1.02";
+	private String version = "1.03";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -316,7 +317,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	public void mouseMoved(ImagePlus imp, MouseEvent e) {
 		if (mainWindowActive) {
 			mainWindow.mouseMoved(imp, e);
-		} else selectionWindow.mouseMoved(imp, e);
+		} else
+			selectionWindow.mouseMoved(imp, e);
 	}
 
 	public String getToolIcon() {
@@ -433,7 +435,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 						selectedPanel.getH(), getSelectedInterpolation()));
 				// calculate the calibration
 				imageData.setPixelCalibration(
-						(1/scaleFactor) * openedImage.getCalibration().pixelWidth,
+						(1 / scaleFactor)
+								* openedImage.getCalibration().pixelWidth,
 						openedImage.getCalibration().getUnit());
 				imageData.setAngle(angle);
 				imageData.setScaleFactor(scaleFactor);
@@ -763,9 +766,14 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			data = activePanel.getImgData();
 			showPanelCoordinates();
 			setGUIImageFrameValues();
-			if (optionsWindow != null)
+			if (optionsWindow != null) {
 				optionsWindow.scaleDisplayCheck.setSelected(activePanel
 						.isScalebarVisible());
+				optionsWindow.scaleTextDisplayCheck.setSelected(activePanel
+						.isScalebarTextVisible());
+				optionsWindow.scaleTextValue.setText(activePanel
+						.getShortScaleBarText());
+			}
 		}
 
 		/**
@@ -1103,7 +1111,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					// reset flag if alt is pressed, to reset the label counter
 					boolean reset = (e.getModifiers() & ActionEvent.ALT_MASK) != 0;
 					boolean backwards = (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0;
-					
+
 					optionsWindow.addPanelLabel(reset, backwards);
 					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts") != null;
 					if (!fontsWindowsOpen) {
@@ -1369,7 +1377,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 						}
 
 						data.setSelectedSerie(selectedSerie);
-						IJ.log("" + selectedSerie);
+						// IJ.log("" + selectedSerie);
 						ImagePlus[] imps = BF.openImagePlus(options);
 						openedImage = imps[imps.length - 1];
 					} catch (FormatException e) {
@@ -1474,7 +1482,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			// IJ 1.47o4 introduced a new Recorder constructor: new
 			// Recorder(boolean visible)
 			recorder = new Recorder(false);
-			
+
 			if (openedImage.getCanvas() == null) {
 				tryToCatchImageOpenFailure(nrOfOpenImgs);
 			}
@@ -1555,6 +1563,9 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		private JTextField yOffsScales = new JTextField("20");
 		private JSlider scalebarSizeSlider = new JSlider();
 		private JCheckBox scaleDisplayCheck = new JCheckBox();
+		private JCheckBox scaleTextDisplayCheck = new JCheckBox("show value: ",
+				false);
+		private JLabel scaleTextValue = new JLabel("-");
 		// suggested by Christian Blanck
 		private JCheckBox lockScale = new JCheckBox("Lock pixel size");
 		private JTextField scalebarHeight = new JTextField("10");
@@ -1592,11 +1603,13 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			labelsPanel.add(labelPositionSelector);
 			labelsPanel.add(labelsOffsets);
 
-			JPanel scalebarsPanel = new JPanel(new GridLayout(2, 1));
-			JPanel scalebarsVisibilityAndSizePanel = new JPanel(
-					new FlowLayout());
+			JPanel scalebarsPanel = new JPanel(new GridLayout(3, 1));
+			JPanel scalebarsVisibilityAndSizePanel = new JPanel(new FlowLayout(
+					FlowLayout.LEFT));
 			JPanel scalebarsOffsetsPanel = new JPanel(new FlowLayout(
-					FlowLayout.RIGHT));
+					FlowLayout.LEFT));
+			JPanel scalebarsTextVisibility = new JPanel(new FlowLayout(
+					FlowLayout.LEFT));
 
 			scalebarsPanel.setBorder(BorderFactory
 					.createTitledBorder("Panel Scale bars"));
@@ -1604,6 +1617,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			scalebarsVisibilityAndSizePanel.add(scaleDisplayCheck);
 			scalebarsVisibilityAndSizePanel.add(scalebarSizeSlider);
 
+			scalebarsTextVisibility.add(scaleTextDisplayCheck);
+			scalebarsTextVisibility.add(scaleTextValue);
 			scalebarsOffsetsPanel.add(new JLabel("height:"));
 			scalebarsOffsetsPanel.add(scalebarHeight);
 
@@ -1616,6 +1631,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			scalebarsOffsetsPanel.add(yOffsScales);
 
 			scalebarsPanel.add(scalebarsVisibilityAndSizePanel);
+			scalebarsPanel.add(scalebarsTextVisibility);
 			scalebarsPanel.add(scalebarsOffsetsPanel);
 
 			// Overlay Items
@@ -1706,7 +1722,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					IJ.showStatus(IJ.d2s(d
 							* activePanel.getImgData().getPixelWidth(), 2)
 							+ " " + activePanel.getImgData().getUnit());
-
+					// TODO:
+					scaleTextValue.setText(activePanel.getShortScaleBarText());
 				}
 			});
 			scaleDisplayCheck.addActionListener(new ActionListener() {
@@ -1737,14 +1754,32 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 				}
 			});
+			scaleTextDisplayCheck.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					if (!scaleTextDisplayCheck.isSelected()) {
+						activePanel.setScaleBarTextVisible(false);
+						mainWindow.draw();
+					} else {
+						activePanel.setScaleBarTextVisible(true);
+						activePanel.setScaleBarTextFont(new Font(TextRoi
+								.getFont(), TextRoi.getStyle(), TextRoi
+								.getSize()));
+						mainWindow.draw();
+					}
+
+				}
+			});
 			lockScale.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					if (lockScale.isSelected()) {
 						Prefs.set("figurej.lockPixelSize", true);
-						double pixelWidth = activePanel.getImgData().getPixelWidth();
+						double pixelWidth = activePanel.getImgData()
+								.getPixelWidth();
 						Prefs.set("figurej.lockedPixelSize", pixelWidth);
-						lockScale.setText("<html>Lock Pixel size: <font color=red>LOCKED</font></html>");
+						lockScale
+								.setText("<html>Lock Pixel size: <font color=red>LOCKED</font></html>");
 
 					} else {
 						Prefs.set("figurej.lockPixelSize", false);

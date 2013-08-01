@@ -98,6 +98,7 @@ public class Serializer {
         folderName = folderName.substring(folderName.lastIndexOf(File.separator)+1);
         // IJ.log(folderName);
         storeImageFiles(mainWindow, path, folderName);
+        mainWindow.draw();
 	}
 
 	/**@param mainW  result image

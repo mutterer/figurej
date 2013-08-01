@@ -15,6 +15,8 @@ public class SeparatorPanel extends Panel{
 
 	private static final long serialVersionUID = 1L;
 	private static int rgbDefColor = 0xff000000 | (255<<16) | (255<<8) | 255;
+	// private static int rgbDefColor = 0x99aabb;
+	// 0x99aabb;
 
 	public SeparatorPanel(int xPos, int yPos, int width, int height){	
 		super(xPos, yPos, width, height);
