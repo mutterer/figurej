@@ -1,12 +1,15 @@
 var cmd = newMenu("Insets Menu Tool",
-newArray("Define Inset Source", "Mark Source region", "Place Inset","-","1px temp. frame around selection","1px temp. frame around all panels"));
+newArray("Mark Last Source Region", "Define Inset Source", "Place Inset","-","1px temp. frame around selection","1px temp. frame around all panels"));
 
 macro "Insets Menu Tool - C037T0b16FT6b10iT8b10gTfb10J" {
    cmd = getArgument();
    if (cmd=="Define Inset Source") {
       run ("Copy");
-   } else if (cmd=="Mark Source region") {
-      run ("Draw");
+   } else if (cmd=="Mark Last Source Region") {
+   		x = split (call("ij.Prefs.get","figurej.xRoi", ""),",");
+   		y = split (call("ij.Prefs.get","figurej.yRoi", ""),",");
+   		makeSelection("polygon",x,y);
+        run ("Draw");
    } else if (cmd=="Place Inset") {
       getSelectionBounds(x,y,sw,sh);
       id=getImageID;

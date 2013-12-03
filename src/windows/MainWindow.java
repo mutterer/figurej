@@ -243,7 +243,7 @@ public class MainWindow extends ImagePlus implements Serializable {
 			if (hoveredPanel.getClass().getName()
 					.contains(LeafPanel.class.getName())) {
 				switchCursor("reset");
-				IJ.showStatus("Double click to associate or open image");
+				if (IJ.isMacintosh()) IJ.showStatus("Double click to associate or open image");
 			} else if (hoveredPanel.getClass().getName()
 					.contains(SeparatorPanel.class.getName())) {
 				if (hoveredPanel.getW() > hoveredPanel.getH()) {

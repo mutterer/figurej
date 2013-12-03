@@ -94,8 +94,8 @@ import dataSets.DataSource;
 public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener {
 
-	private String title = "Figure J";
-	private String version = "1.03";
+	private String title = "FigureJ ";
+	private String version = "1.05";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -204,8 +204,6 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		// closing
 		// behavior
 		appNewOpenSaveWindow.setLocation(0, 0);
-		appNewOpenSaveWindow.setPreferredSize(new Dimension(200, IJ
-				.getInstance().getPreferredSize().height));
 
 		// handle the 3 buttons of this window
 		buttonNew = new Button("New");
@@ -261,7 +259,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					IJ.log(activePanel.getImgData().createLog());
 				}
 				// from version1b2, double click a panel to open an image.
-				if (count == 2)
+				// on the mac only, could find a windows fix so far.
+				if ((count == 2)&&IJ.isMacintosh())
 					panelWindow.openTiltedROITool(false);
 			} else {
 				activePanel = null;
@@ -382,6 +381,21 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				// selected
 				double[] xVals = selectionWindow.getXVals().clone();
 				double[] yVals = selectionWindow.getYVals().clone();
+				
+				
+				// save coords of source roi for use outside figurej.
+				String xRoi = "";
+				String yRoi = "";
+				for (int i = 0; i < xVals.length; i++) {
+					xRoi = xRoi+ IJ.d2s(xVals[i])+",";
+					yRoi = yRoi+ IJ.d2s(yVals[i])+",";
+				}
+				xRoi = xRoi.substring(0, xRoi.length()-1);
+				yRoi = yRoi.substring(0, yRoi.length()-1);
+
+				Prefs.set("figurej.xRoi", xRoi);
+				Prefs.set("figurej.yRoi", yRoi);
+
 
 				LeafPanel selectedPanel = (LeafPanel) temp;
 				DataSource imageData = selectedPanel.getImgData();
@@ -1961,6 +1975,10 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	 */
 	public void setRoiGeometryOnly(FloatPolygon roiGeometryOnly) {
 		this.roiGeometryOnly = roiGeometryOnly;
+	}
+
+}
+.roiGeometryOnly = roiGeometryOnly;
 	}
 
 }
