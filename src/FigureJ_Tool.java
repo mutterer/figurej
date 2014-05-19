@@ -1,3 +1,5 @@
+import ij.CommandListener;
+import ij.Executer;
 import ij.IJ;
 import ij.IJEventListener;
 import ij.ImageListener;
@@ -13,7 +15,6 @@ import ij.gui.TextRoi;
 import ij.gui.Toolbar;
 import ij.io.OpenDialog;
 import ij.plugin.MacroInstaller;
-import ij.plugin.frame.PlugInFrame;
 import ij.plugin.frame.Recorder;
 import ij.plugin.tool.PlugInTool;
 import ij.process.FloatPolygon;
@@ -92,10 +93,10 @@ import dataSets.DataSource;
  */
 
 public class FigureJ_Tool extends PlugInTool implements ImageListener,
-		IJEventListener {
+		IJEventListener, CommandListener {
 
 	private String title = "FigureJ ";
-	private String version = "1.05";
+	private String version = "1.06";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -185,6 +186,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJ.addEventListener(this);
 		initializeFigureJGUI();
 		ImagePlus.addImageListener(this);
+		Executer.addCommandListener(this);
 		run("");
 		// add some extra tools to the toolbar.
 		installMacroFromJar("panel_sticking_Tool.ijm");
@@ -351,7 +353,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				setControlFrameButtonStates(true);
 				if (openedImage.isComposite()
 						&& WindowManager.getFrame("Channels") != null)
-					((PlugInFrame) WindowManager.getFrame("Channels")).close();
+					( WindowManager.getFrame("Channels")).dispose();
 			} else
 			// if the result figure itself is closed ask if the user
 			// wants to store the result
@@ -1163,8 +1165,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				public void actionPerformed(ActionEvent e) {
 					if (openedImage.isComposite()
 							&& WindowManager.getFrame("Channels") != null)
-						((PlugInFrame) WindowManager.getFrame("Channels"))
-								.close();
+						( WindowManager.getFrame("Channels"))
+								.dispose();
 					cleanGUIandTransferROI();
 				}
 			});
@@ -1180,8 +1182,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					setControlFrameButtonStates(true);
 					if (openedImage.isComposite()
 							&& WindowManager.getFrame("Channels") != null)
-						((PlugInFrame) WindowManager.getFrame("Channels"))
-								.close();
+						( WindowManager.getFrame("Channels"))
+								.dispose();
 					if (recorder != null) {
 						try {
 							recorder.close();
@@ -1977,8 +1979,12 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		this.roiGeometryOnly = roiGeometryOnly;
 	}
 
-}
-.roiGeometryOnly = roiGeometryOnly;
+	@Override
+	public String commandExecuting(String command) {
+		if ((WindowManager.getImageCount()>0)&&(IJ.getImage().getTitle()=="FigureJ") && command.equals("Make Composite"))
+			return null; // do not run this command
+		else 
+			return command;
 	}
 
 }
