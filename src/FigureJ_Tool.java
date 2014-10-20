@@ -96,7 +96,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener, CommandListener {
 
 	private String title = "FigureJ ";
-	private String version = "1.06";
+	private String version = "1.08";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -155,6 +155,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 	// options
 	private JButton adoptPixelsButton;
+	private JButton openColorPickerButton;
+	private JButton openFontsDialog;
 	private JButton changeSeparatorColorButton;
 	private JButton printFigure;
 	private JButton drawLabelButton;
@@ -1014,6 +1016,19 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 						mainWindow.draw();
 				}
 			});
+			openColorPickerButton = new JButton("open color picker");
+			openColorPickerButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					IJ.runPlugIn("ij.plugin.frame.ColorPicker", "");
+				}
+			});
+			
+			openFontsDialog = new JButton("open fonts dialog");
+			openFontsDialog.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					IJ.runPlugIn("ij.plugin.SimpleCommands", "fonts");
+				}
+			});
 
 			newTextRoiButton = new JButton("" + new Character((char) 8314)
 					+ " T  text");
@@ -1667,7 +1682,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 			// JPanel miscItemsPanel = new JPanel(new
 			// GridLayout(2+(int)Prefs.get("figurej.debug", 0), 1));
-			JPanel miscItemsPanel = new JPanel(new GridLayout(4, 1));
+			JPanel miscItemsPanel = new JPanel(new GridLayout(5, 1));
 			miscItemsPanel.setBorder(BorderFactory.createTitledBorder("Misc."));
 
 			// if (Prefs.get("figurej.debug", 0)==1)
@@ -1676,6 +1691,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 			// TODO: enable this when workflow is made clear.
 			// miscItemsPanel.add(lockScale);
+			miscItemsPanel.add(openColorPickerButton);
+			miscItemsPanel.add(openFontsDialog);
 			miscItemsPanel.add(adoptPixelsButton);
 			miscItemsPanel.add(changeSeparatorColorButton);
 			miscItemsPanel.add(printFigure);
@@ -1775,6 +1792,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 				public void actionPerformed(ActionEvent arg0) {
 					if (!scaleTextDisplayCheck.isSelected()) {
 						activePanel.setScaleBarTextVisible(false);
+						activePanel.setScalebarLabelJustification(-1);
 						mainWindow.draw();
 					} else {
 						activePanel.setScaleBarTextVisible(true);

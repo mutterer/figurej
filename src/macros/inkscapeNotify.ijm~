@@ -5,11 +5,24 @@
 arg = split(getArgument(),';');
 cmd = arg[0];
 file = arg[1];
+inkscapePath = call("ij.Prefs.get", "figurej.inkscapePath","");
+os = getInfo("os.name");
+binary = "";
+
 if (cmd=="open") {
-exec("open -a "+call("ij.Prefs.get", "figurej.inkscapePath","")+" "+file);
+	if (indexOf(os,"Win")>-1) {
+		exec(inkscapePath, file);
+
+	} else {
+		exec("open","-a",inkscapePath, file);
+	}
 } else if (cmd=="grab") {
 outputfile = replace(file,'.svg','.png');
-success = exec(call("ij.Prefs.get", "figurej.inkscapePath","")+"Contents/Resources/bin/inkscape "+file+" -C --export-png="+outputfile);
+if (indexOf(os,"Mac")>-1) {
+	binary = "Contents/Resources/bin/inkscape";
+	success = exec(inkscapePath+File.separator+binary, file, "-C", "--export-png="+outputfile);
+	}
+	
 }
 
 

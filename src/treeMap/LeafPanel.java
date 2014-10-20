@@ -80,6 +80,15 @@ public class LeafPanel extends Panel {
 	private boolean scalebarVisible = false;
 	private boolean scalebarTextVisible = false;
 	private Font scaleBarTextFont = null;
+	private int scalebarLabelJustification = -1;
+
+	public int getScalebarLabelJustification() {
+		return scalebarLabelJustification;
+	}
+
+	public void setScalebarLabelJustification(int scalebarLabelJustification) {
+		this.scalebarLabelJustification = scalebarLabelJustification;
+	}
 
 	public LeafPanel(int xPos, int yPos, int w, int h) {
 		super(xPos, yPos, w, h);
@@ -523,10 +532,15 @@ public class LeafPanel extends Panel {
 		ImageProcessor ip = imp.getProcessor();
 		ip.setFont(this.getScaleBarTextFont()!=null?this.getScaleBarTextFont():new Font(TextRoi.getFont(), TextRoi.getStyle(),
 				TextRoi.getSize()));
-		TextRoi text = new TextRoi((x1 + x2) / 2, y1
+		
+		if (scalebarLabelJustification==-1) scalebarLabelJustification = TextRoi.getGlobalJustification();
+		
+		double xLabelOffset = x1 - ip.getStringWidth(value);
+		if (scalebarLabelJustification == TextRoi.CENTER) xLabelOffset = x1 - scaleBarWidth/2 - ip.getStringWidth(value)/2;
+		else if (scalebarLabelJustification == TextRoi.LEFT) xLabelOffset = x1 - scaleBarWidth;
+		TextRoi text = new TextRoi(xLabelOffset, y1
 				- ip.getFontMetrics().getHeight() - scaleBarHeight, value,this.getScaleBarTextFont());
-		text.setJustification(TextRoi.CENTER);
-
+		
 		l.setImage(imp); // for calibration
 		text.setImage(imp);
 		scalebarVisible = true;

@@ -9,7 +9,8 @@ public class figure_j implements PlugIn {
 			IJ.error("ImageJ 1.48 or later is required to run FigureJ");
 			return;
 		}
-		Toolbar.removeMacroTools();
+		// removing existing tools seems unnecessary since version 1.48j
+		// Toolbar.removeMacroTools();
 		Toolbar.addPlugInTool(new FigureJ_Tool());
 	}
 }
