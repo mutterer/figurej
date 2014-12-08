@@ -96,7 +96,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener, CommandListener {
 
 	private String title = "FigureJ ";
-	private String version = "1.08";
+	private String version = "1.09";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -305,7 +305,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					Line l = new Line(a.x, a.y, b.x, b.y);
 					boolean horizontalDrag = (b.x - a.x) * (b.x - a.x) > (b.y - a.y)
 							* (b.y - a.y);
-					if (l.getRawLength() > 20)
+					if ((l.getRawLength() > 20)&&(Prefs.get("figurej.mousePanelSlicing", 0) == 1))
 						activePanel.split(2, horizontalDrag);
 					mainWindow.draw();
 					panelWindow.updateValues();
@@ -1094,8 +1094,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			addItemToOverlayButton = new JButton("add");
 			addItemToOverlayButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					String macro = "fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');";
-					IJ.runMacro(macro);
+					ImagePlus imp = IJ.getImage();
+					IJ.run(imp, "Add Selection...", "");
+					IJ.run(imp, "Select None", "");
+					// String macro = "fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');";
+					// IJ.runMacro(macro);
 				}
 			});
 
@@ -1105,9 +1108,13 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					ImagePlus imp = IJ.getImage();
 					Roi roi = imp.getRoi();
 					if (roi != null) {
-						String macro = "shift=30;getSelectionBounds(x, y, width, height);"
-								+ "fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');"
-								+ "run('Select None');run('Restore Selection', '');setSelectionLocation(x+ shift, y+ shift/1.5);";
+						imp.saveRoi();
+						// IJ.run(imp, "Add Selection...", "");
+//						String macro = "shift=30;getSelectionBounds(x, y, width, height);"
+//								+ "fc= toHex(getValue('rgb.foreground')); while (lengthOf(fc)<6) {fc='0'+fc;} run('Add Selection...', 'stroke=#'+fc+' fill=none');run('Select None');"
+//								+ "run('Select None');run('Restore Selection', '');setSelectionLocation(x+ shift, y+ shift/1.5);";
+						IJ.run(imp, "Add Selection...", "");
+						String macro = "run('Restore Selection', '');shift=30;getSelectionBounds(x, y, width, height);setSelectionLocation(x+ shift, y+ shift/1.5);";
 						IJ.runMacro(macro);
 					}
 				}
