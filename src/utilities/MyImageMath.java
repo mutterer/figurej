@@ -51,7 +51,7 @@ public class MyImageMath {
 		Image imageScienceImage;
 		imageScienceImage = Image.wrap(imp);
 		imageScienceImage = affine.run(imageScienceImage, transform,
-				interpolation, true, false);
+				interpolation, true, false, false);
 
 		// finally crop the transformed image to the panel dimension
 		ImagePlus result = imageScienceImage.imageplus();

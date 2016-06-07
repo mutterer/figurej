@@ -6,7 +6,6 @@ import ij.ImageListener;
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.WindowManager;
-import ij.gui.Arrow;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.PolygonRoi;
@@ -96,7 +95,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 		IJEventListener, CommandListener {
 
 	private String title = "FigureJ ";
-	private String version = "1.09";
+	private String version = "1.10b";
 
 	// GUI parts and windows
 	private ROIToolWindow selectionWindow = new ROIToolWindow(); // image region
@@ -975,7 +974,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					optionsWindow.setVisible(true);
 				}
 			});
-			splitHButton = new JButton("split Ñ");
+			splitHButton = new JButton("split -");
 			splitHButton.addActionListener(new ActionListener() {
 				// split active panel horizontally in as many children as chosen
 				// in the splitNr combo box
@@ -1034,14 +1033,26 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					+ " T  text");
 			newTextRoiButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					IJ.selectWindow("FigureJ");
-					String macro = "setTool('rectangle'); setFont('user'); makeText('Text',getWidth/2,getHeight/2);";
-					IJ.runMacro(macro);
 					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts") != null;
 					if (!fontsWindowsOpen) {
 						IJ.run("Fonts...");
-						IJ.selectWindow("FigureJ");
 					}
+					IJ.selectWindow("FigureJ");
+					IJ.run("Select None");
+					IJ.setTool("text");
+
+/*					ImagePlus imp = IJ.getImage();
+					imp.createNewRoi((int)(imp.getWidth()/2), (int)(imp.getHeight()/2));
+					TextRoi r = (TextRoi) imp.getRoi();					
+					String str = "Text..."; 
+					char[] charArray = str.toCharArray();
+					for (char c : charArray) r.addChar(c);
+					r.setLocation((int)(imp.getWidth()/2), (int)(imp.getHeight()/2));
+					imp.setRoi(r);
+*/
+					IJ.showStatus("Text tool selected");
+
+					
 				}
 			});
 
@@ -1055,22 +1066,11 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			newArrowRoiButton = new JButton("" + new Character((char) 8314)
 					+ new Character((char) 8599) + " arrow");
 			newArrowRoiButton.addActionListener(new ActionListener() {
-				@SuppressWarnings("static-access")
 				public void actionPerformed(ActionEvent e) {
-					ImagePlus imp = IJ.getImage();
-					if (imp != null) {
-						IJ.setTool("arrow");
-						Arrow a = new Arrow(imp.getWidth() / 4,
-								imp.getHeight() / 4, imp.getWidth() / 2, imp
-										.getHeight() / 2);
-						a.setStrokeWidth(Prefs.get("arrow.width", 1));
-						a.setDoubleHeaded(Prefs.get("arrow.double", false));
-						a.setHeadSize(Prefs.get("arrow.size", 1));
-						a.setStyle((int) Prefs.get("arrow.style", 1));
-						a.setOutline(Prefs.get("arrow.outline", false));
-						a.setColor(Toolbar.getForegroundColor());
-						imp.setRoi(a);
-					}
+								
+					IJ.selectWindow("FigureJ");
+					IJ.run("Select None");
+
 					Window fr[] = Window.getWindows();
 					boolean arrowsOptionsOpen = false;
 					for (int i = 0; i < fr.length; i++) {
@@ -1080,6 +1080,8 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 					}
 					if (!arrowsOptionsOpen)
 						IJ.doCommand("Arrow Tool...");
+					IJ.showStatus("Arrow tool selected");
+
 				}
 
 			});
@@ -1542,7 +1544,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			// IJ.runMacro(activePanel.getImgData().getMacro());
 
 			if (openedImage.isComposite()) {
-				IJ.run("Channels Tool...");
+				IJ.doCommand("Channels Tool...");
 				if (data.getActChs() == "")
 					IJ.runMacro("Stack.setDisplayMode('composite');Stack.setActiveChannels('11111111');");
 				else
@@ -1689,7 +1691,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 
 			// JPanel miscItemsPanel = new JPanel(new
 			// GridLayout(2+(int)Prefs.get("figurej.debug", 0), 1));
-			JPanel miscItemsPanel = new JPanel(new GridLayout(5, 1));
+			JPanel miscItemsPanel = new JPanel(new GridLayout(4, 1));
 			miscItemsPanel.setBorder(BorderFactory.createTitledBorder("Misc."));
 
 			// if (Prefs.get("figurej.debug", 0)==1)
@@ -1699,7 +1701,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			// TODO: enable this when workflow is made clear.
 			// miscItemsPanel.add(lockScale);
 			miscItemsPanel.add(openColorPickerButton);
-			miscItemsPanel.add(openFontsDialog);
+			//miscItemsPanel.add(openFontsDialog);
 			miscItemsPanel.add(adoptPixelsButton);
 			miscItemsPanel.add(changeSeparatorColorButton);
 			miscItemsPanel.add(printFigure);
