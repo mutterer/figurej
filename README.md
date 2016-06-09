@@ -5,6 +5,8 @@ This ImageJ plugin allows easy creation of image figures for publications, repor
 Authors
 =======
 2016-06-09: Welcoming @stelfrich Stefan Helfrich as a contributor.
+
+
 Jerome Mutterer (CNRS) and Edda Zinck (HTW).
 We're thankful to Etienne Schaeffer, Wayne Rasband, Johannes Schindelin, Maxime Hervé, Benoit Aigouy, Stuart Bell, Pierre Bourdoncle, Ton Timmers and Jerome Bugeon for bug fixes, nice ideas or code suggestion.
 
