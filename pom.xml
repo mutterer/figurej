@@ -33,7 +33,15 @@
 			<timezone>Europe/Paris</timezone>
 		</developer>
 		<developer>
-			<name>Edda</name>
+			<id>eddyZ</id>
+			<name>Edda Zinck</name>
+			<organization>HTW Berlin</organization>
+			<organizationUrl>http://www.htw-berlin.de/</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>Europe/Berlin</timezone>
 		</developer>
 		<developer>
 			<id>stelfrich</id>
