@@ -89,7 +89,7 @@ public class Inkscape_Link extends Link implements ActionListener {
 					width = IJ.getImage().getRoi().getBounds().width;
 					height = IJ.getImage().getRoi().getBounds().height;
 				}
-				String svg = getTextFromJar("imgs/empty.svg");
+				String svg = getTextFromJar("/imgs/empty.svg");
 				svg = svg.replaceAll("##WIDTH##", IJ.d2s(width, 0));
 				svg = svg.replaceAll("##HEIGHT##", IJ.d2s(height, 0));
 				fileName = linkIdentifyer+timeStamp()+".svg";

@@ -858,7 +858,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			copyPasteIconButtons.add(middle);
 
 			logoButton.setIcon(new ImageIcon(getClass().getResource(
-					"imgs/logo.png")));
+					"/imgs/logo.png")));
 			copyPasteIconButtons.add(logoButton);
 
 			p4.add(interpolationType);
