@@ -6,8 +6,7 @@ import ij.plugin.PlugIn;
 import imagescience.ImageScience;
 
 /**
- * Main {@link PlugIn} of FigureJ that checks for satisfied dependencies and
- * installs tools if necessary.
+ * Main {@link PlugIn} of FigureJ that checks for satisfied dependencies.
  */
 public class FigureJ implements PlugIn {
 
