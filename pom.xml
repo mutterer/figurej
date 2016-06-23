@@ -63,10 +63,6 @@
 		<url>https://github.com/mutterer/figurej</url>
 	</scm>
 
-	<properties>
-		<main-class>FigureJ_Tool</main-class>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -91,21 +87,6 @@
 			<version>3.0.0</version>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>${main-class}</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 	
 	<repositories>
 		<repository>
