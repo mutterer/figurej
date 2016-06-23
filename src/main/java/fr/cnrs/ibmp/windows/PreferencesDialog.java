@@ -1,4 +1,4 @@
-package fr.cnrs.ibmp;
+package fr.cnrs.ibmp.windows;
 
 import ij.Prefs;
 import ij.gui.GenericDialog;

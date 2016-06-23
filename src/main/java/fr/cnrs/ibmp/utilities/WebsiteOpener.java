@@ -1,4 +1,4 @@
-package fr.cnrs.ibmp;
+package fr.cnrs.ibmp.utilities;
 
 import ij.IJ;
 import ij.plugin.PlugIn;
