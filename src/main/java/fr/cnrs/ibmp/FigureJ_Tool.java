@@ -703,7 +703,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 			wEvent.getWindow().dispose();
 			appNewOpenSaveWindow.dispose();
 
-			IJ.setTool("rectangle");
+			IJ.setTool("rect");
 
 			if (panelWindow != null)
 				panelWindow.dispose();
