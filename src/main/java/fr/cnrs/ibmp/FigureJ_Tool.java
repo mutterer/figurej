@@ -330,7 +330,7 @@ public class FigureJ_Tool extends PlugInTool implements ImageListener,
 	}
 
 	public String getToolName() {
-		return "FigureJ";
+		return "FigureJ Tool";
 	}
 
 	/** if the tilted rect tool is opened, deactivates the main frame */

@@ -2,6 +2,7 @@ package fr.cnrs.ibmp;
 
 import ij.IJ;
 import ij.Menus;
+import ij.gui.Toolbar;
 import ij.plugin.PlugIn;
 import imagescience.ImageScience;
 
@@ -24,10 +25,12 @@ public class FigureJ implements PlugIn {
 		checkLSMReader();
 		checkImageScience();
 
-		if (!errorDetails.equals("")) {
+		if (!errorDetails.isEmpty()) {
 			IJ.error("FigureJ", "Some libraries are missing:\n \n" + errorDetails);
 			return;
 		}
+		
+		Toolbar.addPlugInTool(new FigureJ_Tool());
 	}
 
 	/**
