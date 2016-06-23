@@ -9,7 +9,7 @@ import imagescience.ImageScience;
  * Main {@link PlugIn} of FigureJ that checks for satisfied dependencies and
  * installs tools if necessary.
  */
-public class figure_j implements PlugIn {
+public class FigureJ implements PlugIn {
 
 	/** Minimum required ImageScience version */
 	private final static String MINISVERSION = "3.0.0";
