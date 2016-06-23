@@ -19,7 +19,7 @@ public class figure_j implements PlugIn {
 		if (Menus.getCommands().get("Show LSMToolbox") == null) {
 			errorDetails += "* LSMToolbox is required\n";
 		}
-		if (Menus.getCommands().get("LSM Reader") == null) {
+		if (Menus.getCommands().get("LSMReader...") == null) {
 			errorDetails += "* LSM Reader is required\n";
 		}
 		// this was taken from NeuronJ source code by Erik Meijering
