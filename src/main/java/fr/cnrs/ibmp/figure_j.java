@@ -1,39 +1,68 @@
 package fr.cnrs.ibmp;
 
-import ij.*;
-import ij.gui.*;
-import ij.plugin.*;
+import ij.IJ;
+import ij.Menus;
+import ij.plugin.PlugIn;
 import imagescience.ImageScience;
 
+/**
+ * Main {@link PlugIn} of FigureJ that checks for satisfied dependencies and
+ * installs tools if necessary.
+ */
 public class figure_j implements PlugIn {
+
+	/** Minimum required ImageScience version */
 	private final static String MINISVERSION = "3.0.0";
 
+	String errorDetails = "";
+
+	@Override
 	public void run(String arg) {
-		String errorDetails = "";
-		if (IJ.getVersion().compareTo("1.48") < 0) {
-			errorDetails += "* ImageJ 1.48 or later is required\n";
+		// Check if requirements are fulfilled
+		checkImageJ();
+		checkBioformats();
+		checkLSMToolbox();
+		checkLSMReader();
+		checkImageScience();
+
+		if (!errorDetails.equals("")) {
+			IJ.error("FigureJ", "Some libraries are missing:\n \n" + errorDetails);
+			return;
 		}
-		if (Menus.getCommands().get("Bio-Formats Importer") == null) {
-			errorDetails += "* Bioformats is required\n";
+	}
+
+	/**
+	 * Code adapted from NeuronJ source code by Erik Meijering.
+	 */
+	private void checkImageScience() {
+		if (ImageScience.version().compareTo(MINISVERSION) < 0) {
+			errorDetails += "* ImageScience version " + MINISVERSION +
+				" or higher is required";
 		}
-		if (Menus.getCommands().get("Show LSMToolbox") == null) {
-			errorDetails += "* LSMToolbox is required\n";
-		}
+	}
+
+	private void checkLSMReader() {
 		if (Menus.getCommands().get("LSMReader...") == null) {
 			errorDetails += "* LSM Reader is required\n";
 		}
-		// this was taken from NeuronJ source code by Erik Meijering
-		try {
-			if (ImageScience.version().compareTo(MINISVERSION) < 0)
-				throw new IllegalStateException();
-		} catch (Throwable e) {
-			errorDetails += "* ImageScience version " + MINISVERSION + " or higher is required";
-		}
-		if (errorDetails != "") {
-			IJ.error("FigureJ", "Some libraries are missing:\n \n"+errorDetails);
-			return;
-		} else {
-			Toolbar.addPlugInTool(new FigureJ_Tool());
+	}
+
+	private void checkLSMToolbox() {
+		if (Menus.getCommands().get("Show LSMToolbox") == null) {
+			errorDetails += "* LSMToolbox is required\n";
 		}
 	}
+
+	private void checkBioformats() {
+		if (Menus.getCommands().get("Bio-Formats Importer") == null) {
+			errorDetails += "* Bioformats is required\n";
+		}
+	}
+
+	private void checkImageJ() {
+		if (IJ.getVersion().compareTo("1.48") < 0) {
+			errorDetails += "* ImageJ 1.48 or later is required\n";
+		}
+	}
+
 }
