@@ -14,6 +14,7 @@ public class FigureJ implements PlugIn {
 	/** Minimum required ImageScience version */
 	private final static String MINISVERSION = "3.0.0";
 
+	/** Error string that communicates missing libraries */
 	String errorDetails = "";
 
 	@Override
