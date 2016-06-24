@@ -1,52 +1,78 @@
 package fr.cnrs.ibmp.windows;
 
-/*
- * @author Edda Zinck
- * @author Jerome Mutterer
- * (c) IBMP-CNRS
-*/ 
-
 import ij.IJ;
 
 import ij.Prefs;
 import ij.gui.GenericDialog;
 
-
+/**
+ * Dialog to request information from the user about the to be created figure,
+ * e.g., width and height.
+ * 
+ * (c) IBMP-CNRS
+ * 
+ * @author Edda Zinck
+ * @author Jerome Mutterer
+ */
 public class NewFigureDialog  {
 
-	private String  		unit = "";
-	private int 			width  	= 0, height  = 0, resolution = 0,  separatorSize = 5;
-	private double 			pWidth 	= 0, pHeight = 0, pseparatorSize=0;
-	private String[] 		units 	= {"cm", "mm", "inch"};
+	private double printedWidth = 0;
+	private double printedHeight = 0;
+	private double printedSeparatorSize = 0;
+	private String unit = "";
 
-	GenericDialog 			gd;
-	private int 			fieldSize 	= 15;
+	private int width = 0;
+	private int height = 0;
+	private int separatorSize = 5;
 
-	/** @return real world unit like cm */
+	private int resolution = 0;
+
+	private String[] units = { "cm", "mm", "inch" };
+
+	private GenericDialog gd;
+
+	private int fieldSize = 15;
+
+	/**
+	 * @return Unit of the provided dimensions, e.g., cm
+	 */
 	public String getUnit() {
 		return unit;
 	}
 
+	/**
+	 * @return Printed resolution in dots per inch.
+	 */
 	public double getResolution() {
 		return resolution;
 	}
 
-	public int getWidth() {
-		return width;
-	}
-
+	/**
+	 * @return Height of resulting image in pixels.
+	 */
 	public int getHeight() {
 		return height;
 	}
 
-	/** @return width of the separator lines between leaf panels / different images */
+	/**
+	 * @return Width of resulting image in pixels.
+	 */
+	public int getWidth() {
+		return width;
+	}
+
+	/**
+	 * @return width of the separator lines between leaf panels / different images
+	 */
 	public int getSeparatorSize() {
 		return separatorSize;
 	}
 
-	/**@return true if a new image has to be created (dialog not cancelled, no new template created */
+	/**
+	 * @return true if a new image has to be created (dialog not cancelled, no new
+	 *         template created)
+	 */
 	public boolean openDialog() {
-
 		gd = new GenericDialog("New Figure");
 
 		gd.addMessage("Specify Printed Figure Dimensions");
@@ -59,40 +85,49 @@ public class NewFigureDialog  {
 
 		// show the dialog
 		gd.showDialog();
-		if (gd.wasCanceled()) 
+		if (gd.wasCanceled()) {
 			return false;
+		}
 
 		// store the values entered
-		pWidth = (double) gd.getNextNumber();
-		pHeight 	= (double) gd.getNextNumber();
-		pseparatorSize 	= (double) gd.getNextNumber();
-		unit 		= gd.getNextChoice();
-		resolution 	= (int) gd.getNextNumber();
-
-		Prefs.set("figure.width", pWidth);
-		Prefs.set("figure.height", pHeight);
-		Prefs.set("figure.separator", pseparatorSize);
-		Prefs.set("figure.unit", unit);
-		Prefs.set("figure.resolution", resolution);
+		getValuesFromDialog();
+		storeValues();
 		
 		double factor = 1;
-		if ("cm" == unit) 
+		if (unit.equals("cm")) {
 			factor = 1 / 2.54;
-		else if ("mm" == unit) 
+		} else if (unit.equals("mm")) {
 			factor = 1 / 25.4;
+		}
 
 		// real world coordinates to pixel values
-		width  = (int)((pWidth  * resolution * factor) +0.5);  // for numbers >0 adding 0.5 before a cast gives the same result as rounding
-		height = (int)((pHeight * resolution * factor) +0.5);  // which costs more time
-		separatorSize = (int)((pseparatorSize * resolution * factor) +0.5);  
+		width  = (int)((printedWidth  * resolution * factor) + 0.5); // for numbers >0 adding 0.5 before a cast gives the same result as rounding
+		height = (int)((printedHeight * resolution * factor) + 0.5); // which costs more time
+		separatorSize = (int)((printedSeparatorSize * resolution * factor) + 0.5);  
 
-		if ((width > 0) && (height > 0)) 
+		if ((width > 0) && (height > 0)) {
 			return true;
-
-		else {
-			IJ.error("Image too small");
-			return false; 
 		}
+
+		IJ.error("Image too small");
+		return false; 
+	}
+
+	private void getValuesFromDialog() {
+		printedWidth = gd.getNextNumber();
+		printedHeight = gd.getNextNumber();
+		printedSeparatorSize = gd.getNextNumber();
+		unit = gd.getNextChoice();
+		resolution = (int) gd.getNextNumber();
+	}
+
+	private void storeValues() {
+		Prefs.set("figure.width", printedWidth);
+		Prefs.set("figure.height", printedHeight);
+		Prefs.set("figure.separator", printedSeparatorSize);
+		Prefs.set("figure.unit", unit);
+		Prefs.set("figure.resolution", resolution);
 	}
 
 }
+
