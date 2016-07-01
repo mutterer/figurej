@@ -38,14 +38,18 @@ public class FigureJ implements PlugIn {
 	 * Code adapted from NeuronJ source code by Erik Meijering.
 	 */
 	private void checkImageScience() {
-		if (ImageScience.version().compareTo(MINISVERSION) < 0) {
-			errorDetails += "* ImageScience version " + MINISVERSION +
-				" or higher is required";
+		try {
+			if (ImageScience.version().compareTo(MINISVERSION) < 0) {
+				errorDetails += "* ImageScience version " + MINISVERSION + " or higher is required";
+			}
+		} catch (NoClassDefFoundError e) {
+			errorDetails += "* ImageScience is required";
 		}
 	}
 
 	private void checkLSMReader() {
-		if (Menus.getCommands().get("LSMReader...") == null) {
+		if ((Menus.getCommands().get("LSM Reader") == null)
+				&& (Menus.getCommands().get("LSMReader...") == null)) {
 			errorDetails += "* LSM Reader is required\n";
 		}
 	}
