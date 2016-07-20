@@ -1,11 +1,6 @@
+// TODO Missing license header
 package fr.cnrs.ibmp.windows;
 
-/*
- * @author Edda Zinck
- * @author Jerome Mutterer
- * (c) IBMP-CNRS   
- * 
- */
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -35,9 +30,19 @@ import fr.cnrs.ibmp.treeMap.ContainerPanel;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.treeMap.Panel;
 import fr.cnrs.ibmp.treeMap.SeparatorPanel;
+import fr.cnrs.ibmp.LeafEvent;
+import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
 
-public class MainWindow extends ImagePlus implements Serializable {
+/**
+ * TODO Documentation
+ * 
+ * (c) IBMP-CNRS
+ * 
+ * @author Edda Zinck
+ * @author Jerome Mutterer
+ */
+public class MainWindow extends ImagePlus implements Serializable, LeafListener {
 
 	private static final long serialVersionUID = 1L;
 
@@ -71,14 +76,14 @@ public class MainWindow extends ImagePlus implements Serializable {
 
 	private int[] mousePressedPoint = new int[2];
 
-	public int[] getMousePressedPoint() {
-		return mousePressedPoint;
+	public Point getMousePressedPoint() {
+		return new Point(mousePressedPoint[0], mousePressedPoint[1]);
 	}
 
 	private int[] mouseReleasedPoint = new int[2];
 
-	public int[] getMouseReleasedPoint() {
-		return mouseReleasedPoint;
+	public Point getMouseReleasedPoint() {
+		return new Point(mouseReleasedPoint[0], mouseReleasedPoint[1]);
 	}
 
 	// control snap behavior of dragged separator panels
@@ -474,6 +479,32 @@ public class MainWindow extends ImagePlus implements Serializable {
 
 	public void setCal(Calibration c) {
 		this.resultFigure.setCalibration(c);
+	}
+
+	@Override
+	public void leafSelected(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void leafDeselected(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void leafResized(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void leafCleared(LeafEvent e) {
+		draw();
+	}
+
+	@Override
+	public void leafRemoved(LeafEvent e) {
+		updateSelectedPanel(true);
+		draw();
+	}
+
+	@Override
+	public void leafSplit(LeafEvent e) {
+		updateSelectedPanel(true);
+		draw();
 	}
 
 }

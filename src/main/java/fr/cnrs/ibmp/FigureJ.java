@@ -1,5 +1,8 @@
 package fr.cnrs.ibmp;
 
+import fr.cnrs.ibmp.utilities.Macros;
+import fr.cnrs.ibmp.windows.MainController;
+import fr.cnrs.ibmp.windows.ROIToolWindow;
 import ij.IJ;
 import ij.Menus;
 import ij.gui.Toolbar;
@@ -31,7 +34,25 @@ public class FigureJ implements PlugIn {
 			return;
 		}
 		
-		Toolbar.addPlugInTool(new FigureJ_Tool());
+		MainController mainController = MainController.getInstance();
+		
+		FigureJ_Tool figureJTool = new FigureJ_Tool();
+		Toolbar.addPlugInTool(figureJTool);
+		mainController.setFigureJTool(figureJTool);
+		
+		ROIToolWindow roiTool = new ROIToolWindow();
+		Toolbar.addPlugInTool(roiTool);
+		IJ.addEventListener(roiTool);
+		figureJTool.addLeafListener(roiTool);
+//		mainController.setRoiTool(roiTool);
+		
+		// Add some extra tools to the toolbar.
+		Macros.installMacroFromJar("panel_sticking_Tool.ijm");
+		Macros.installMacroFromJar("insets_Tool.ijm");
+		
+		// Select the FigureJ Tool
+		Toolbar toolbar = Toolbar.getInstance();
+		toolbar.setTool(figureJTool.getToolName());
 	}
 
 	/**

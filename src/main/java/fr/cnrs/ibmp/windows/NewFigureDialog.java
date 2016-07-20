@@ -1,5 +1,7 @@
 package fr.cnrs.ibmp.windows;
 
+import fr.cnrs.ibmp.NewFigureEvent;
+import fr.cnrs.ibmp.NewFigureListener;
 import ij.IJ;
 
 import ij.Prefs;
@@ -14,7 +16,7 @@ import ij.gui.GenericDialog;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public class NewFigureDialog  {
+public class NewFigureDialog implements NewFigureListener {
 
 	private double printedWidth = 0;
 	private double printedHeight = 0;
@@ -127,6 +129,11 @@ public class NewFigureDialog  {
 		Prefs.set("figure.separator", printedSeparatorSize);
 		Prefs.set("figure.unit", unit);
 		Prefs.set("figure.resolution", resolution);
+	}
+
+	@Override
+	public void newFigure(NewFigureEvent e) {
+		openDialog();
 	}
 
 }

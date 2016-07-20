@@ -61,6 +61,7 @@ public abstract class Panel implements Serializable{
 			Panel temp = child.getClicked(x, y, tol);
 			if(temp != null)
 				clicked = temp;
+				// TODO break; ?
 		}
 
 		return clicked;

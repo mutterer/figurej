@@ -1,54 +1,89 @@
 package fr.cnrs.ibmp.windows;
 
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.net.URL;
+
+import javax.swing.ImageIcon;
+
+import fr.cnrs.ibmp.LeafEvent;
+import fr.cnrs.ibmp.LeafListener;
+import fr.cnrs.ibmp.treeMap.LeafPanel;
+import fr.cnrs.ibmp.utilities.MyImageMath;
+import ij.Executer;
 import ij.IJ;
+import ij.IJEventListener;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
+import ij.gui.Toolbar;
+import ij.io.FileInfo;
+import ij.measure.Calibration;
+import ij.plugin.frame.Recorder;
 import ij.plugin.tool.PlugInTool;
+import ij.process.ColorProcessor;
+import ij.process.FloatPolygon;
+import ij.process.ImageProcessor;
 
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.event.MouseEvent;
-import java.net.URL;
-
-import javax.swing.ImageIcon;
-
-/*
+/**
+ * This class realizes a new ImageJ tool as plugin that allows so draw a
+ * rectangular region of interest on a overlay. dragging, scaling and rotating
+ * the ROI does not change its sides aspect ratio.
+ * 
+ * FIXME: bad angle calculation leads to mirror condition at some angle
+ * boundaries (blue line flips during rotation)
+ * 
+ * (c) IBMP-CNRS
+ * 
  * @author Edda Zinck
  * @author Jerome Mutterer
- * (c) IBMP-CNRS
- * date: April 2012 
- *
- * This class realizes a new ImageJ tool as plugin that allows so draw a rectangular region of interest on a overlay.
- * dragging, scaling and rotating the ROI does not change its sides aspect ratio.
- *
- * FIXME : bad angle calculation leads to mirror condition at some angle boundaries (blue line flips during rotation)
  */
+public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListener, IJEventListener {
 
-public class ROIToolWindow extends PlugInTool {
-
-	// the rectangle
+	/** the rectangle */
 	private Roi rectRoi;
 
-	// the imageId it is supposed to work on
+	public static String toolName = "FigureJ ROITool";
+	
+	/** the imageId it is supposed to work on */
 	private int workingImageID;
 
 	public void setWorkingImageID(int id) {
 		this.workingImageID = id;
 	}
 
+	/** {@link Recorder} instance used for saving changes to images. */
+	private Recorder recorder;
+
+	/**
+	 * @return the {@link Recorder} instance
+	 */
+	public Recorder getRecorder() {
+		return recorder;
+	}
+
+	/**
+	 * @return the recorded changes from {@link #recorder}.
+	 */
+	public String getRecordedChanges() {
+		return recorder.getText();
+	}
+	
 	// start size
-	private double horizSize; // just used in initialization
-	private double verticSize;
+	private double horizontalSize = 150.0;
+	private double verticalSize = 100.0;
 
 	// angle the ROI is rotated relative to its initial position
-	private double angle = 0.;
+	private double angle = 0d;
 
 	// grab distance for the rotation handles (small red lines)
 	private int grabDistance = 20;
@@ -68,10 +103,9 @@ public class ROIToolWindow extends PlugInTool {
 	private boolean cornerClick = false;
 	private boolean handeClick = false;
 
-	public ROIToolWindow() {
-		horizSize = 150.0;
-		verticSize = 100.0;
-	}
+	private ImagePlus imagePlus;
+
+	private int interpolationMethod;
 
 	/**
 	 * @param prefW
@@ -82,34 +116,39 @@ public class ROIToolWindow extends PlugInTool {
 	 *            preserved
 	 */
 	public ROIToolWindow(double prefW, double prefH) {
-		horizSize = prefW;
-		verticSize = prefH;
+		horizontalSize = prefW;
+		verticalSize = prefH;
+	}
+
+	public ROIToolWindow() {
+		run("");
 	}
 
 	public void init(ImagePlus imp) {
+		this.imagePlus = imp;
+		
 		setWorkingImageID(imp.getID());
 		// set size of the ROI
-		double w;
-		double h;
-		w = imp.getWidth();
-		h = imp.getHeight();
+		double w = imp.getWidth();
+		double h = imp.getHeight();
+
 		// as long as the size of the ROI is too large, make it smaller
-		while (horizSize >= w || verticSize >= h) {
-			horizSize /= 1.5;
-			verticSize /= 1.5;
+		while (horizontalSize >= w || verticalSize >= h) {
+			horizontalSize /= 1.5;
+			verticalSize /= 1.5;
 		}
 
 		// calculate a centered position
-		double xOffset = w / 2 - horizSize / 2;
-		double yOffset = h / 2 - verticSize / 2;
+		double xOffset = w / 2 - horizontalSize / 2;
+		double yOffset = h / 2 - verticalSize / 2;
 		xVals[0] = xOffset;
 		xVals[1] = xOffset;
-		xVals[2] = xOffset + horizSize;
-		xVals[3] = xOffset + horizSize;
+		xVals[2] = xOffset + horizontalSize;
+		xVals[3] = xOffset + horizontalSize;
 
 		yVals[0] = yOffset;
-		yVals[1] = yOffset + verticSize;
-		yVals[2] = yOffset + verticSize;
+		yVals[1] = yOffset + verticalSize;
+		yVals[2] = yOffset + verticalSize;
 		yVals[3] = yOffset;
 		cx = (xVals[0] + xVals[2]) / 2;
 		cy = (yVals[0] + yVals[2]) / 2;
@@ -123,6 +162,7 @@ public class ROIToolWindow extends PlugInTool {
 	 * check whether the user clicked near an edge or separator or outside of
 	 * the ROI
 	 */
+	@Override
 	public void mousePressed(ImagePlus imp, MouseEvent e) {
 
 		ImageCanvas ic = imp.getCanvas();
@@ -135,6 +175,13 @@ public class ROIToolWindow extends PlugInTool {
 			init(imp);
 			drawRect(imp);
 		}
+		
+		// TODO Create cropped image
+		int count = e.getClickCount();
+		if (count == 2) {
+			generateCroppedImagePlus().show();
+		}
+		
 		// check if clicked inside rectangle
 		inside = rectRoi.contains(x, y);
 		// check if clicked within grab distance of a corner
@@ -168,6 +215,7 @@ public class ROIToolWindow extends PlugInTool {
 		// "corner " : " ") + (inside ? "inside" : "outside"));
 	}
 
+	@Override
 	public void mouseMoved(ImagePlus imp, MouseEvent e) {
 
 		ImageCanvas ic = imp.getCanvas();
@@ -245,6 +293,7 @@ public class ROIToolWindow extends PlugInTool {
 	   }
 
 	/** depending on where the user clicked the ROI is scaled, rotated or moved */
+	@Override
 	public void mouseDragged(ImagePlus imp, MouseEvent e) {
 		if (cornerClick) {
 			scaleRect(imp, e);
@@ -257,6 +306,7 @@ public class ROIToolWindow extends PlugInTool {
 	}
 
 	/** remember the coordinates of the current position */
+	@Override
 	public void mouseReleased(ImagePlus imp, MouseEvent e) {
 		ImageCanvas ic = imp.getCanvas();
 		int x = ic.offScreenX(e.getX());
@@ -267,14 +317,18 @@ public class ROIToolWindow extends PlugInTool {
 		saveY = yVals.clone();
 	}
 
-	/** define the message shown when the tool symbol is double clicked */
-	public void showOptionsDialog() {
-		// not used
-	}
+	@Override
+	public void showOptionsDialog() { /* NB */ }
 
-	/** define the icon the IJ tool gets in the tool bar */
+	@Override
+	public String getToolName() {
+		return ROIToolWindow.toolName;
+	}
+	
+	@Override
 	public String getToolIcon() {
-		return "C000"; // not used
+		// TODO Define unique icon
+		return "C037D06D15D16D24D25D26D27D28D29D2aD33D34D35D36D37D3bD3cD42D43D44D45D46D47D48D4cD4dDb1Db2Db6Db7Db8Db9DbaDbbDbcDc2Dc3Dc7Dc8Dc9DcaDcbDd4Dd5Dd6Dd7Dd8Dd9DdaDe8De9Df8CabcD05D14D17D18D19D1aD23D2bD2cD32D3dD41D51D52D53D54D55D56D57D58Da6Da7Da8Da9DaaDabDacDadDbdDc1DccDd2Dd3DdbDe4De5De6De7DeaDf9";
 	}
 
 	/** draw a region of interest (ROI) on an overlay using the rect coordinates */
@@ -495,5 +549,124 @@ public class ROIToolWindow extends PlugInTool {
 	public void setCoords(double[] xCoords, double[] yCoords) {
 		xVals = xCoords;
 		yVals = yCoords;
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+			ImagePlus cropped = generateCroppedImagePlus();
+			cropped.show();
+		}
+	}
+
+	private ImagePlus generateCroppedImagePlus() {
+		float[] xRect = new float[xVals.length];
+		float[] yRect = new float[xVals.length];
+
+		for (int i = 0; i < xRect.length; i++) {
+			xRect[i] = (float) xVals[i];
+			yRect[i] = (float) yVals[i];
+		}
+		
+		PolygonRoi boundingRect = new PolygonRoi(new FloatPolygon(xRect, yRect),
+			Roi.POLYGON);
+
+		double angle = Math.atan((yVals[3] - yVals[0]) / (xVals[3] - xVals[0])) *
+			180 / Math.PI + ((xVals[3] < xVals[0]) ? 180 : 0);
+
+		Line top = new Line(xVals[0], yVals[0], xVals[3], yVals[3]);
+		double scaleFactor = imagePlus.getWidth() / top.getRawLength();
+
+		// Create new image
+		// TODO Refactor to new method
+		ImageProcessor croppedImageProcessor = MyImageMath.getImageProcessor(
+			imagePlus, boundingRect, angle, scaleFactor, imagePlus.getWidth(),
+			imagePlus.getHeight(), interpolationMethod);
+		ImageProcessor ip = new ColorProcessor(croppedImageProcessor.getWidth(),
+			croppedImageProcessor.getHeight(), (int[]) croppedImageProcessor
+				.getPixels());
+		ImagePlus croppedImagePlus = new ImagePlus("", ip);
+
+		Calibration cal = imagePlus.getCalibration();
+		cal.pixelWidth = (1 / scaleFactor) * imagePlus.getCalibration().pixelWidth;
+		cal.pixelHeight = (1 / scaleFactor) * imagePlus.getCalibration().pixelHeight;
+		croppedImagePlus.setCalibration(cal);
+		
+		return croppedImagePlus;
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void leafSelected(LeafEvent e) {
+		LeafPanel panel = (LeafPanel) e.getSource();
+		
+		horizontalSize = panel.getW();
+		verticalSize = panel.getH();
+	}
+
+	@Override
+	public void leafDeselected(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void leafResized(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void leafCleared(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void leafRemoved(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void leafSplit(LeafEvent e) { /* NB */ }
+
+	@Override
+	public void eventOccurred(int eventID) {
+		if (eventID == IJEventListener.TOOL_CHANGED) {
+				String name = IJ.getToolName();
+				
+				if (name.equals(this.getToolName())) {
+					toolToggled(IJ.getImage());
+				}
+		}
+	}
+
+	/**
+	 * Executed when {@code this} has been activated / toggled from the ImageJ1
+	 * toolbar.
+	 * 
+	 * @param activeImagePlus the active {@link ImagePlus} at the time of toggling
+	 */
+	private void toolToggled(ImagePlus activeImagePlus) {
+		// TODO Check if there is a history for that image
+
+		init(activeImagePlus);
+
+		// Save filename from which the file has been loaded
+		FileInfo fileInfo = activeImagePlus.getOriginalFileInfo();
+		
+		String activeImagePlusPath = fileInfo.directory + fileInfo.fileName;
+		
+		// If no directory is available, we don't really have to record the history
+		if (fileInfo.directory != null) {
+		// Start recording changes
+			recordChanges();
+		}
+
+		drawRect(activeImagePlus);
+	}
+
+	private void recordChanges() {
+		recorder = new Recorder(false);
 	}
 }

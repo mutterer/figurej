@@ -1,13 +1,15 @@
 package fr.cnrs.ibmp.utilities;
 
-/*
+/**
+ * Handles the extraction of the image region selected with the ROI tool it has
+ * to be rotated if the ROI selection tool was tilted and scaled to the size of
+ * the panel that will display the selected pixels.
+ * 
+ * (c) IBMP-CNRS 
+ * 
  * @author Edda Zinck
  * @author Jerome Mutterer
- * (c) IBMP-CNRS 
- * class handling the extraction of the image region selected with the ROI tool
- * it has to be rotated if the ROI selection tool was tilted and scaled to the size of the 
- * panel that will display the selected pixels 
- *
+ * @author Stefan Helfrich (University of Konstanz)
  */
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -21,13 +23,24 @@ import imagescience.transform.Transform;
 public class MyImageMath {
 
 	public static int[] getPixels(ImagePlus openImage, PolygonRoi boundingRect,
-			double angle, double scaleFactor, int panelW, int panelH,
-			int interpolation) {
+		double angle, double scaleFactor, int panelW, int panelH,
+		int interpolation)
+	{
+
+		ImageProcessor ipresult = MyImageMath.getImageProcessor(openImage,
+			boundingRect, angle, scaleFactor, panelW, panelH, interpolation);
+
+		return (int[]) ipresult.getPixels();
+	}
+
+	public static ImageProcessor getImageProcessor(ImagePlus openImage,
+		PolygonRoi boundingRect, double angle, double scaleFactor, int panelW,
+		int panelH, int interpolation)
+	{
 
 		// first remove all overlays in the source image
 		ImageCanvas ic = openImage.getCanvas();
-		if (ic != null)
-			ic.setShowAllList(null);
+		if (ic != null) ic.setShowAllList(null);
 		openImage.setOverlay(null);
 		// then flatten the image, which always ends with an RGB result
 		ImagePlus imp = openImage.flatten();
@@ -50,17 +63,18 @@ public class MyImageMath {
 
 		Image imageScienceImage;
 		imageScienceImage = Image.wrap(imp);
-		imageScienceImage = affine.run(imageScienceImage, transform,
-				interpolation, true, false, false);
+		imageScienceImage = affine.run(imageScienceImage, transform, interpolation,
+			true, false, false);
 
 		// finally crop the transformed image to the panel dimension
 		ImagePlus result = imageScienceImage.imageplus();
-		result.setRoi((result.getWidth() - panelW) / 2,
-				(result.getHeight() - panelH) / 2, panelW, panelH);
-		ImageProcessor ipresult = result.getProcessor().crop()
-				.resize(panelW, panelH);
+		result.setRoi((result.getWidth() - panelW) / 2, (result.getHeight() -
+			panelH) / 2, panelW, panelH);
+		ImageProcessor ipresult = result.getProcessor().crop().resize(panelW,
+			panelH);
 
-		return (int[]) ipresult.getPixels();
+		return ipresult;
+
 	}
 
 }

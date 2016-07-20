@@ -1,3 +1,5 @@
+// TODO Missing license header
+
 package fr.cnrs.ibmp.treeMap;
 
 import ij.IJ;
@@ -5,19 +7,18 @@ import ij.gui.Overlay;
 
 import java.util.ArrayList;
 
-
 /**
+ * An invisible panel that can contain leaf panels (i.e. panels that can display
+ * an image) or further containers building up a nested structure of
+ * {@link Panel}s. All the elements in a container have either the same height,
+ * which makes it a container that can be split vertically, or the same width,
+ * such that it can be split horizontally.
+ * 
+ * (c) IBMP-CNRS
+ * 
  * @author Edda Zinck
  * @author Jerome Mutterer
- * (c) IBMP-CNRS 
- * 
- * invisible panel
- * 
- * can contain leaf panels (= panel that can display an image) or further containers.
- * all the elements in a container have either the same height - vertically splitable container -
- * or the same width.
  */
-
 public class ContainerPanel extends Panel {
 	private static final long serialVersionUID = 1L;
 	private boolean horizontallySplitable;

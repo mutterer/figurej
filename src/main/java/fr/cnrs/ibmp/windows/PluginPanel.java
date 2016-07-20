@@ -1,11 +1,7 @@
+// TODO Missing license header
+
 package fr.cnrs.ibmp.windows;
 
-/*
- * @author Edda Zinck
- * @author Jerome Mutterer
- * (c) IBMP-CNRS
- * 
- */
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,19 +18,28 @@ import fr.cnrs.ibmp.plugIns.Link;
 import fr.cnrs.ibmp.plugIns.R_Link;
 import fr.cnrs.ibmp.plugIns.ScriptPanel_Link;
 
-public class PluginPanel extends JPanel{
+/**
+ * TODO Documentation
+ * 
+ * (c) IBMP-CNRS
+ * 
+ * @author Edda Zinck
+ * @author Jerome Mutterer
+ */
+public class PluginPanel extends JPanel {
+
 	private static final long serialVersionUID = 1L;
 	// private JButton pyMolButton = new JButton("PyMOL");
 	// private JButton excelButton = new JButton("Excel");
 	private JButton genericButton = new JButton("Generic");
-	private JButton rButton		= new JButton("R");
+	private JButton rButton = new JButton("R");
 	private JButton chimeraButton = new JButton("Chimera");
 	private JButton inkscapeButton = new JButton("Inkscape");
 	private JButton scriptButton = new JButton("Script");
 
 	private Link generic, r, chimera, inkscape, script;
 
-	public PluginPanel(final MainWindow w) {
+	public PluginPanel(final MainController mainController) {
 		this.setLayout(new GridLayout(3	, 2));
 		// this.add(pyMolButton);
 		this.add(genericButton);
@@ -46,7 +51,7 @@ public class PluginPanel extends JPanel{
 		// this.add(excelButton);
 		this.setBorder(BorderFactory.createTitledBorder("External Tools"));
 
-		addListeners(w);
+		addListeners(mainController.getMainWindow());
 	}
 
 	private void addListeners(final MainWindow w) {

@@ -1,3 +1,5 @@
+// TODO Missing license header
+
 package fr.cnrs.ibmp.plugIns;
 
 import ij.IJ;
@@ -18,12 +20,14 @@ import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.windows.MainWindow;
 
 /**
+ * Controls a Chimera instance and allows to create an image that is
+ * used to fill the active panel with Chimera visualizations.
+ * 
+ * TODO Copyright
+ * 
  * @author Jerome Mutterer
  * @author Edda Zinck
- * this class controls a Chimera instance and allows to create an image that is
- * used to fill the active panel with Chimera visualizations.
  */
-
 public class Chimera_Link extends Link implements ActionListener {
 
 	public static final String LOC_KEY 			= "chimeralink.loc";

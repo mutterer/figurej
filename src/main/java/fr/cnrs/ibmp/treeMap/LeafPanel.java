@@ -1,3 +1,4 @@
+// TODO Missing license header
 package fr.cnrs.ibmp.treeMap;
 
 import ij.IJ;
@@ -19,15 +20,16 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 import fr.cnrs.ibmp.utilities.LabelPosition;
+import fr.cnrs.ibmp.windows.MainController;
 import fr.cnrs.ibmp.dataSets.DataSource;
 
-/*
+/**
+ * Panel that shows an image and contains a link to a {@link DataSource}. It cannot have any children. 
+ * 
+ * (c) IBMP-CNRS 
+ * 
  * @author Edda Zinck
  * @author Jerome Mutterer
- * (c) IBMP-CNRS 
- *
- * panel containing a link to a data source (image)
- * can not have any children. 
  */
 public class LeafPanel extends Panel {
 
@@ -647,4 +649,21 @@ public class LeafPanel extends Panel {
 		this.scaleBarTextFont = scaleBarTextFont;
 	}
 
+	/**
+	 * Checks if {@code this} contains a {@link DataSource}.
+	 * 
+	 * @return true if {@link #imgData} does not contain a {@link DataSource}.
+	 */
+	public boolean isEmpty() {
+		return getImgData() == null;
+	}
+
+	public void clear() {
+		imgData.clear();
+		
+		eraseImage();
+		// HACK Ugly ugly code
+		hideScalebar(MainController.getInstance().getMainWindow().getImagePlus().getOverlay());
+	}
+	
 }

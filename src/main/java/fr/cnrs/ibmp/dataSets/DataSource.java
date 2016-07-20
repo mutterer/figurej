@@ -1,15 +1,22 @@
-/*
- * @author Edda Zinck
- * @author Jerome Mutterer
- * (c) IBMP-CNRS 
- * 
- */
+// TODO Missing license header
+
 package fr.cnrs.ibmp.dataSets;
 
 import java.io.File;
 import java.io.Serializable;
 
-public class DataSource implements Serializable{
+/**
+ * Information storage for individual panels of an image. This includes in
+ * particular the origin of the image (e.g. file) and the plane from which the
+ * panel has been created. Additionally, this class saves operations that have
+ * been applied to the source image after loading as an ImageJ1 macro. 
+ * 
+ * (c) IBMP-CNRS
+ * 
+ * @author Edda Zinck
+ * @author Jerome Mutterer
+ */
+public class DataSource implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -273,5 +280,16 @@ public class DataSource implements Serializable{
 		this.scaleFactor = scaleFactor;
 	}
 
-
+	public void clear() {
+		setCoords(null, null);
+		setExternalSource("");
+		setFileDirectory("");
+		setFileName("");
+		setMacro("");
+		setSlice(1);
+		setChannel(1);
+		setFrame(1);
+		setDisplayRange(-1., -1.);
+	}
+	
 }

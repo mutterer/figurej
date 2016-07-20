@@ -21,6 +21,8 @@ public class HelpDialog implements PlugIn {
 		gd.addMessage("Easy article figures with FigureJ\n \nJerome Mutterer & Edda Zinck\nCNRS, 2016.");
 		gd.addMessage("\nClick 'Help' to proceed to FigureJ homepage with tutorial.");
 		gd.addHelp(url);
+		
+		gd.showDialog();
 	}
 
 }
