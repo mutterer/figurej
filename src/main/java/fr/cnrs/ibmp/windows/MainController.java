@@ -320,25 +320,12 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 
 		if (temp != null)
 			if (temp.getClass().getName().contains(LeafPanel.class.getName())) {
-				// remember the size and position of the image fragment the user
-				// selected
+				// Remember the size and position of the image fragment the user selected
 				double[] xVals = selectionWindow.getXVals().clone();
 				double[] yVals = selectionWindow.getYVals().clone();
-				
-				
-				// save coords of source roi for use outside figurej.
-				String xRoi = "";
-				String yRoi = "";
-				for (int i = 0; i < xVals.length; i++) {
-					xRoi = xRoi+ IJ.d2s(xVals[i])+",";
-					yRoi = yRoi+ IJ.d2s(yVals[i])+",";
-				}
-				xRoi = xRoi.substring(0, xRoi.length()-1);
-				yRoi = yRoi.substring(0, yRoi.length()-1);
 
-				Prefs.set("figurej.xRoi", xRoi);
-				Prefs.set("figurej.yRoi", yRoi);
-
+				// Save coordinates of source ROI for use with external tools
+				saveRoiCoordinates(xVals, yVals);
 
 				LeafPanel selectedPanel = (LeafPanel) temp;
 				DataSource imageData = selectedPanel.getImgData();
@@ -404,6 +391,24 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 
 		panelWindow.setROIToolOpenable(true);
 		panelWindow.setControlFrameButtonStates(true);
+	}
+
+	/**
+	 * @param xVals
+	 * @param yVals
+	 */
+	private void saveRoiCoordinates(double[] xVals, double[] yVals) {
+		String xRoi = "";
+		String yRoi = "";
+		for (int i = 0; i < xVals.length; i++) {
+			xRoi = xRoi+ IJ.d2s(xVals[i])+",";
+			yRoi = yRoi+ IJ.d2s(yVals[i])+",";
+		}
+		xRoi = xRoi.substring(0, xRoi.length()-1);
+		yRoi = yRoi.substring(0, yRoi.length()-1);
+
+		Prefs.set("figurej.xRoi", xRoi);
+		Prefs.set("figurej.yRoi", yRoi);
 	}
 
 	public void cleanGUIandTransferROI() {

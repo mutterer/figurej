@@ -16,7 +16,6 @@ import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.utilities.MyImageMath;
-import ij.Executer;
 import ij.IJ;
 import ij.IJEventListener;
 import ij.ImagePlus;
@@ -25,7 +24,6 @@ import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.plugin.frame.Recorder;
@@ -46,6 +44,7 @@ import ij.process.ImageProcessor;
  * 
  * @author Edda Zinck
  * @author Jerome Mutterer
+ * @author Stefan Helfrich
  */
 public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListener, IJEventListener {
 
