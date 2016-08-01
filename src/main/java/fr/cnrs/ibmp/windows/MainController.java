@@ -14,6 +14,8 @@ import java.awt.event.WindowListener;
 import javax.swing.JButton;
 
 import fr.cnrs.ibmp.FigureJ_Tool;
+import fr.cnrs.ibmp.ImageSelectionEvent;
+import fr.cnrs.ibmp.ImageSelectionListener;
 import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.NewFigureEvent;
@@ -50,7 +52,7 @@ import fr.cnrs.ibmp.utilities.Serializer;
  * @author Stefan Helfrich
  */
 public class MainController implements NewFigureListener, SaveFigureListener,
-	WindowListener, CommandListener, IJEventListener, ImageListener, LeafListener, ActionListener
+	WindowListener, CommandListener, IJEventListener, ImageListener, LeafListener, ActionListener, ImageSelectionListener
 {
 
 	/** TODO Documentation */
@@ -98,6 +100,7 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 
 	private FigureJ_Tool figureJTool;
 
+	/** TODO Remove this! */
 	private ImagePlus openedImage;
 
 	private static MainController instance;
@@ -314,6 +317,8 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 	 * the pixels inside the ROI are rotated and scaled to the size of the panel
 	 * the image belongs to. the pixel data is passed to the panel, the main
 	 * window is set active again; the panels are repainted.
+	 * 
+	 * @param macro TODO Documentation
 	 */
 	private void transferROIDataToPanel(String macro) {
 		Panel temp = mainWindow.getSelectedPanel();
@@ -328,10 +333,9 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 				saveRoiCoordinates(xVals, yVals);
 
 				LeafPanel selectedPanel = (LeafPanel) temp;
+	
+				// store detailed information about the image the user chose for a panel
 				DataSource imageData = selectedPanel.getImgData();
-
-				// store detailed information about the image the user chose for
-				// a panel
 				imageData.setCoords(xVals, yVals);
 				imageData.setPixelCalibration(
 						openedImage.getCalibration().pixelWidth, openedImage
@@ -388,6 +392,78 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 				mainWindow.draw();
 				mainWindow.getImagePlus().killRoi();
 			}
+
+		panelWindow.setROIToolOpenable(true);
+		panelWindow.setControlFrameButtonStates(true);
+	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param selectedImage
+	 * @param xVals
+	 * @param yVals
+	 * @param macro
+	 */
+	private void transferROIDataToPanel(final ImagePlus selectedImage,
+		final double[] xVals, final double[] yVals, final String macro)
+	{
+		if ((mainWindow.getSelectedPanel() != null) &&
+			(mainWindow.getSelectedPanel() instanceof LeafPanel))
+		{
+			// Remember the size and position of the image fragment the user selected
+			double[] xValsCopy = xVals.clone();
+			double[] yValsCopy = yVals.clone();
+
+			// Save coordinates of source ROI for use with external tools
+			saveRoiCoordinates(xValsCopy, yValsCopy);
+
+			// store detailed information about the image the user chose for a panel
+			LeafPanel selectedPanel = (LeafPanel) mainWindow.getSelectedPanel();
+			DataSource imageData = selectedPanel.getImgData();
+			imageData.setCoords(xValsCopy, yValsCopy);
+			imageData.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
+				selectedImage.getCalibration().getUnit());
+			imageData.setMacro(macro);
+			imageData.setDisplayRange(selectedImage.getDisplayRangeMin(),
+				selectedImage.getDisplayRangeMax());
+
+			// position in stack like and composite images
+			imageData.setSlice(selectedImage.getSlice());
+			imageData.setChannel(selectedImage.getChannel());
+			imageData.setFrame(selectedImage.getFrame());
+			WindowManager.setTempCurrentImage(selectedImage);
+			imageData.setActChs(IJ.runMacro(
+				"ch='';if (is('composite')) Stack.getActiveChannels(ch);return ch;"));
+
+			float[] xRect = new float[xValsCopy.length];
+			float[] yRect = new float[xValsCopy.length];
+
+			for (int i = 0; i < xRect.length; i++) {
+				xRect[i] = (float) xValsCopy[i];
+				yRect[i] = (float) yValsCopy[i];
+			}
+
+			double angle = Math.atan((yValsCopy[3] - yValsCopy[0]) / (xValsCopy[3] -
+				xValsCopy[0])) * 180 / Math.PI + ((xValsCopy[3] < xValsCopy[0]) ? 180
+					: 0);
+
+			Line top = new Line(xValsCopy[0], yValsCopy[0], xValsCopy[3],
+				yValsCopy[3]);
+			double scaleFactor = selectedPanel.getW() / top.getRawLength();
+
+			// Fill the panel with the pixels selected from the image
+			selectedPanel.setPixels((int[]) selectedImage.getProcessor().getPixels());
+			
+			// calculate the calibration
+			imageData.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
+				selectedImage.getCalibration().getUnit());
+			imageData.setAngle(angle);
+			imageData.setScaleFactor(scaleFactor);
+
+			mainWindow.draw();
+			mainWindow.getImagePlus().killRoi();
+		}
 
 		panelWindow.setROIToolOpenable(true);
 		panelWindow.setControlFrameButtonStates(true);
@@ -529,6 +605,29 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 
 	public LeafPanel getActivePanel() {
 		return activePanel;
+	}
+
+	@Override
+	public void imageSelected(ImageSelectionEvent e) {
+		// fire custom progress bar b/c some transforms are slow
+		Thread t = new Thread(new CustomProgressBar());
+		t.start();
+		try {
+			transferROIDataToPanel((ImagePlus) e.getSource(), e.getxVals(), e
+				.getyVals(), e.getMacro());
+		}
+		catch (Exception e1) {
+			IJ.error("Could not transform image.\n" + e1.getMessage());
+		}
+		finally {
+			t.interrupt();
+		}
+		
+		// Focus main window
+		WindowManager.setCurrentWindow(mainWindow.getWindow());
+		
+		// Select the FigureJ Tool
+		Toolbar.getInstance().setTool(figureJTool.getToolName());
 	}
 
 }

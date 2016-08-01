@@ -54,16 +54,12 @@ public class MyImageMath {
 
 		// the affine transform is done by imagescience
 		Transform transform = new Transform();
-
 		transform.rotate(angle * -1, Axes.Z);
 		transform.scale(scaleFactor, Axes.X);
 		transform.scale(scaleFactor, Axes.Y);
 
-		Affine affine = new Affine();
-
-		Image imageScienceImage;
-		imageScienceImage = Image.wrap(imp);
-		imageScienceImage = affine.run(imageScienceImage, transform, interpolation,
+		Image imageScienceImage = Image.wrap(imp);
+		imageScienceImage = new Affine().run(imageScienceImage, transform, interpolation,
 			true, false, false);
 
 		// finally crop the transformed image to the panel dimension

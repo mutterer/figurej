@@ -292,4 +292,21 @@ public class DataSource implements Serializable {
 		setDisplayRange(-1., -1.);
 	}
 	
+	/**
+	 * TODO Documentation
+	 * 
+	 * @return
+	 */
+	public boolean fromImagePlus() {
+		return getFileDirectory().isEmpty() && getFileName().isEmpty();
+	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @return
+	 */
+	public boolean fromFile() {
+		return !fromImagePlus();
+	}
 }

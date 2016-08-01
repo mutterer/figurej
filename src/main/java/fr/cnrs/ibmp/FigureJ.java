@@ -45,6 +45,7 @@ public class FigureJ implements PlugIn {
 		IJ.addEventListener(roiTool);
 		figureJTool.addLeafListener(roiTool);
 //		mainController.setRoiTool(roiTool);
+		roiTool.addImageSelectionListener(mainController);
 		
 		// Add some extra tools to the toolbar.
 		Macros.installMacroFromJar("panel_sticking_Tool.ijm");
