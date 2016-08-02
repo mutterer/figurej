@@ -223,6 +223,8 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 			notifyImageSelected(new ImageSelectionEvent(generatedCroppedImagePlus,
 				xVals, yVals, getRecordedChanges()));
 
+			reset();
+
 			return;
 		}
 
@@ -670,12 +672,21 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 	@Override
 	public void leafSelected(LeafEvent e) {
 		LeafPanel panel = (LeafPanel) e.getSource();
+		updateDimensions(panel.getW(), panel.getH());
+	}
 
-		horizontalSize = panel.getW();
-		verticalSize = panel.getH();
+	/**
+	 * TODO Documention
+	 * 
+	 * @param width
+	 * @param height
+	 */
+	private void updateDimensions(final int width, final int height) {
+		horizontalSize = width;
+		verticalSize = height;
 
-		panelWidth = panel.getW();
-		panelHeight = panel.getH();
+		panelWidth = width;
+		panelHeight = height;
 	}
 
 	@Override
@@ -691,7 +702,10 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 	public void leafRemoved(LeafEvent e) { /* NB */ }
 
 	@Override
-	public void leafSplit(LeafEvent e) { /* NB */ }
+	public void leafSplit(LeafEvent e) { 
+		LeafPanel panel = (LeafPanel) e.getSource();
+		updateDimensions(panel.getW(), panel.getH());
+	}
 
 	/**
 	 * Executed when {@code this} has been activated / toggled from the ImageJ1
@@ -706,8 +720,6 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 
 		// Save filename from which the file has been loaded
 		FileInfo fileInfo = activeImagePlus.getOriginalFileInfo();
-
-		String activeImagePlusPath = fileInfo.directory + fileInfo.fileName;
 
 		// If no directory is available, we don't really have to record the history
 		if (fileInfo.directory != null) {

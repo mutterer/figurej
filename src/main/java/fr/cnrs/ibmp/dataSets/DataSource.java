@@ -5,6 +5,11 @@ package fr.cnrs.ibmp.dataSets;
 import java.io.File;
 import java.io.Serializable;
 
+import javax.swing.event.EventListenerList;
+
+import fr.cnrs.ibmp.DataSourceEvent;
+import fr.cnrs.ibmp.DataSourceListener;
+
 /**
  * Information storage for individual panels of an image. This includes in
  * particular the origin of the image (e.g. file) and the plane from which the
@@ -72,6 +77,8 @@ public class DataSource implements Serializable {
 		this.sourceX = null;
 		this.sourceY = null;
 	}
+
+	private EventListenerList listeners = new EventListenerList();
 
 	/**@return minimum RGB value of the image serving as source for the panel this dataSource belongs to
 	 * -1 if no image is assigned */
@@ -146,16 +153,22 @@ public class DataSource implements Serializable {
 	public void setCoords(double[] sourceX, double[] sourceY) {
 		this.sourceX = sourceX;
 		this.sourceY = sourceY;
+
+		notifyListeners();
 	}
 	/**@param filePath path of the image chosen to fill the panel this data source belongs to with */
 	public void setFileDirectory(String filePath) {
-		if(!filePath.endsWith(File.separator))
+		if(!filePath.isEmpty() && !filePath.endsWith(File.separator))
 			filePath += File.separator;
 		this.fileDirectory = filePath;
+
+		notifyListeners();
 	}
 	/**@param name of the image chosen to fill the panel this data source belongs to with (without path!)*/
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+
+		notifyListeners();
 	}
 	/**@param text notes on the image (e.g. from the GUI notes field) */
 	public void setNotes(String text) {
@@ -172,18 +185,26 @@ public class DataSource implements Serializable {
 	 */
 	public void setMacro(String macro) {
 		macroString = macro;
+
+		notifyListeners();
 	}
 	/**@see ij.ImagePlus.setSlice(int currentSlice)*/
 	public void setSlice(int currentSlice) {
 		selectedSlice = currentSlice;
+
+		notifyListeners();
 	}
 	/**@see ij.ImagePlus.setFrame(int currentFrame)*/
 	public void setFrame(int currentFrame) {
 		selectedFrame = currentFrame;
+
+		notifyListeners();
 	}
 	/**@see ij.ImagePlus.setChannel(int currentChannel)*/
 	public void setChannel(int currentChannel) {
 		selectedChannel = currentChannel;
+
+		notifyListeners();
 	}
 	/** @param channels 1s for the channels displayed, zeros for the invisible ones */
 	public void setActiveChannels(boolean[] channels) {
@@ -192,12 +213,16 @@ public class DataSource implements Serializable {
 	/** @param channels 1s for the channels displayed, zeros for the invisible ones */
 	public void setActChs(String channels) {
 		actChs = channels;
+
+		notifyListeners();
 	}
 	/**@param lowerRange minimum color value of the image assigned to the panel the data source belongs to
 	 * @param upperRange maximum color value of the image assigned to the panel the data source belongs to */
 	public void setDisplayRange(double lowerRange, double upperRange) {
 		lowerDisplRange = lowerRange;
 		upperDisplRange = upperRange;
+
+		notifyListeners();
 	}
 	/**@param label String label of the panel or "" */
 	public void setLabel(String label) {
@@ -258,7 +283,9 @@ public class DataSource implements Serializable {
 	}
 
 	public void setExternalSource(String source) {
-		this.externalSource = source;	
+		this.externalSource = source;
+
+		notifyListeners();
 	}
 	public String getExternalSource() {
 		return this.externalSource;	
@@ -270,6 +297,8 @@ public class DataSource implements Serializable {
 
 	public void setAngle(double angle) {
 		this.angle = angle;
+
+		notifyListeners();
 	}
 
 	public double getScaleFactor() {
@@ -278,6 +307,13 @@ public class DataSource implements Serializable {
 
 	public void setScaleFactor(double scaleFactor) {
 		this.scaleFactor = scaleFactor;
+
+		notifyListeners();
+	}
+
+	private void notifyListeners() {
+		for (DataSourceListener listener : listeners.getListeners(DataSourceListener.class))
+			listener.dataSourceChanged(new DataSourceEvent(this));
 	}
 
 	public void clear() {
@@ -286,6 +322,7 @@ public class DataSource implements Serializable {
 		setFileDirectory("");
 		setFileName("");
 		setMacro("");
+		setNotes("");
 		setSlice(1);
 		setChannel(1);
 		setFrame(1);
@@ -308,5 +345,13 @@ public class DataSource implements Serializable {
 	 */
 	public boolean fromFile() {
 		return !fromImagePlus();
+	}
+
+	public void removeListener(DataSourceListener listener) {
+		listeners.remove(DataSourceListener.class, listener);
+	}
+
+	public void addListener(DataSourceListener listener) {
+		listeners.add(DataSourceListener.class, listener);
 	}
 }

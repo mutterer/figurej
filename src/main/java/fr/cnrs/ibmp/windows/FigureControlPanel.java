@@ -25,10 +25,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.EventListenerList;
 
+import fr.cnrs.ibmp.DataSourceEvent;
+import fr.cnrs.ibmp.DataSourceListener;
+import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.SeparatorEvent;
 import fr.cnrs.ibmp.SeparatorListener;
-import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.treeMap.Panel;
@@ -41,7 +43,6 @@ import ij.WindowManager;
 import ij.gui.Toolbar;
 import ij.io.OpenDialog;
 import ij.io.Opener;
-import ij.plugin.frame.Recorder;
 import ij.process.FloatPolygon;
 import imagescience.transform.Affine;
 import loci.formats.FormatException;
@@ -60,7 +61,7 @@ import loci.plugins.in.ImporterPrompter;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public class FigureControlPanel extends JFrame implements LeafListener, SeparatorListener {
+public class FigureControlPanel extends JFrame implements LeafListener, SeparatorListener, DataSourceListener {
 
 	//split leaf panels
 	private JButton splitHButton;
@@ -110,8 +111,6 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		this.mainController = mainController;
 		this.activePanel = mainController.getActivePanel();
 		
-		addLeafListener(this);
-		
 		// build GUI
 		this.setTitle("Figure Control");
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -122,7 +121,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		fillComboBoxes();
 		addPanelWindowToolTips();
 
-		setGUIImageFrameValues();
+		setGUIImageFrameValues(null);
 		setNotesListener();
 
 		this.add(cellInit(), BorderLayout.NORTH);
@@ -286,12 +285,12 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	/**
 	 * Set image path and image notes.
 	 */
-	private void setGUIImageFrameValues() {
-		if (activePanel.getImgData() != null) {
-			if (!activePanel.getImgData().getFileDirectory().isEmpty())
-				filePathLabel.setText(activePanel.getImgData().getFileDirectory()
-						+ activePanel.getImgData().getFileName());
-			notes.setText(activePanel.getImgData().getNotes());
+	private void setGUIImageFrameValues(final DataSource dataSource) {
+		if (dataSource != null) {
+			if (!dataSource.getFileDirectory().isEmpty())
+				filePathLabel.setText(dataSource.getFileDirectory()
+						+ dataSource.getFileName());
+			notes.setText(dataSource.getNotes());
 		}
 	}
 
@@ -326,8 +325,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		logoButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				HelpDialog helpDialog = new HelpDialog();
-				helpDialog.run("");
+				new AboutDialog().run("");
 			}
 		});
 
@@ -774,13 +772,18 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 	@Override
 	public void leafSelected(LeafEvent e) {
+		activePanel.getImgData().removeListener(this);
+		
 		LeafPanel leafPanel = (LeafPanel) e.getSource();
 		activePanel = leafPanel;
+		activePanel.getImgData().addListener(this);
 		showPanelCoordinates();
-		setGUIImageFrameValues();
-		
+
 		// Enable the image opening-related buttons
 		disableAllPanelWindowButtons(false);
+
+		// Update the UI
+		setGUIImageFrameValues(activePanel.getImgData());
 	}
 
 	@Override
@@ -834,14 +837,16 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	}
 
 	@Override
-	public void leafRemoved(LeafEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void leafRemoved(LeafEvent e) { /* NB */ }
 
 	@Override
 	public void leafSplit(LeafEvent e) {
 		activePanel = (LeafPanel) mainController.getSelectedPanel();
+	}
+
+	@Override
+	public void dataSourceChanged(DataSourceEvent e) {
+		setGUIImageFrameValues((DataSource) e.getSource());
 	}
 
 }

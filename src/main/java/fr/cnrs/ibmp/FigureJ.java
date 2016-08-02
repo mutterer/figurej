@@ -44,7 +44,7 @@ public class FigureJ implements PlugIn {
 		Toolbar.addPlugInTool(roiTool);
 		IJ.addEventListener(roiTool);
 		figureJTool.addLeafListener(roiTool);
-//		mainController.setRoiTool(roiTool);
+		mainController.setRoiTool(roiTool);
 		roiTool.addImageSelectionListener(mainController);
 		
 		// Add some extra tools to the toolbar.

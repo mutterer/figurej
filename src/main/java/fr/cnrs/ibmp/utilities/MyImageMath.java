@@ -44,7 +44,7 @@ public class MyImageMath {
 		openImage.setOverlay(null);
 		// then flatten the image, which always ends with an RGB result
 		ImagePlus imp = openImage.flatten();
-
+		
 		// crop according to the tilted selection rectangle so we can rotate
 		// around the result center, and transform a smaller image
 		imp.setRoi(boundingRect);
@@ -64,8 +64,9 @@ public class MyImageMath {
 
 		// finally crop the transformed image to the panel dimension
 		ImagePlus result = imageScienceImage.imageplus();
-		result.setRoi((result.getWidth() - panelW) / 2, (result.getHeight() -
-			panelH) / 2, panelW, panelH);
+		result.setRoi((int)(result.getWidth() - panelW/scaleFactor) / 2, (int)(result.getHeight() -
+			panelH/scaleFactor) / 2, (int)(panelW/scaleFactor), (int)(panelH/scaleFactor));
+		result.show();
 		ImageProcessor ipresult = result.getProcessor().crop().resize(panelW,
 			panelH);
 

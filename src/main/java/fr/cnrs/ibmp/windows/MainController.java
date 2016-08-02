@@ -150,6 +150,7 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 				+ newOpenSaveFrame.getLocation().y + Constants.guiBorder));
 			panelWindow.addLeafListener(mainWindow);
 			panelWindow.addLeafListener(this); // NB FILO list for listeners
+			panelWindow.addLeafListener(selectionWindow);
 
 			figureJTool.addLeafListener(panelWindow);
 
@@ -628,6 +629,10 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 		
 		// Select the FigureJ Tool
 		Toolbar.getInstance().setTool(figureJTool.getToolName());
+	}
+
+	public void setRoiTool(ROIToolWindow roiTool) {
+		this.selectionWindow = roiTool;
 	}
 
 }

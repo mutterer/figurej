@@ -127,13 +127,13 @@ public class ContainerPanel extends Panel {
 		if(nr<2)
 			return;
 
-		int newLeafSideLenght;
+		int newLeafSideLength;
 		if(horizontalSplit) 
-			newLeafSideLenght = (child0.panelHeight-(nr-1)*separatorWidth) / nr;
+			newLeafSideLength = (child0.panelHeight-(nr-1)*separatorWidth) / nr;
 		else
-			newLeafSideLenght = (child0.panelWidth -(nr-1)*separatorWidth) / nr;
+			newLeafSideLength = (child0.panelWidth -(nr-1)*separatorWidth) / nr;
 
-		if(newLeafSideLenght < minLeafSideLength) {
+		if(newLeafSideLength < minLeafSideLength) {
 			IJ.error("this image is too small to split it into "+nr);
 			return;
 		}
@@ -147,34 +147,34 @@ public class ContainerPanel extends Panel {
 		
 		if(horizontalSplit) {
 			int oldChildH = child0.getH();
-			child0.setH(newLeafSideLenght);
+			child0.setH(newLeafSideLength);
 			childrenTemp.add(child0);
 			separatorPos = child0.getH()+child0.getY();
 			
 			for(int i=0; i<nr-1; i++) {
 				SeparatorPanel sep = new SeparatorPanel(child0.getX(), separatorPos, child0.getW(), separatorWidth);
-				LeafPanel leaf = new LeafPanel(child0.getX(), separatorPos+separatorWidth, child0.getW(), newLeafSideLenght);
+				LeafPanel leaf = new LeafPanel(child0.getX(), separatorPos+separatorWidth, child0.getW(), newLeafSideLength);
 				childrenTemp.add(sep);
 				childrenTemp.add(leaf);
-				separatorPos = separatorPos+separatorWidth+newLeafSideLenght;
+				separatorPos = separatorPos+separatorWidth+newLeafSideLength;
 			}
 			Panel lastNewChild = childrenTemp.get(childrenTemp.size()-1);
-			lastNewChild.setH(lastNewChild.getH()+ (oldChildH-nr*newLeafSideLenght-(nr-1)*separatorWidth));	// handle rounding errors
+			lastNewChild.setH(lastNewChild.getH()+ (oldChildH-nr*newLeafSideLength-(nr-1)*separatorWidth));	// handle rounding errors
 		}
 		else {
 			int oldChildW = child0.getW();
-			child0.setW(newLeafSideLenght);
+			child0.setW(newLeafSideLength);
 			childrenTemp.add(child0);
 			separatorPos = child0.getW() + child0.getX();
 			for (int i=0; i<nr-1; i++) {
 				SeparatorPanel sep = new SeparatorPanel(separatorPos, child0.getY(), separatorWidth, child0.getH());
-				LeafPanel leafi = new LeafPanel(separatorPos+separatorWidth, child0.getY(), newLeafSideLenght, child0.getH());
+				LeafPanel leafi = new LeafPanel(separatorPos+separatorWidth, child0.getY(), newLeafSideLength, child0.getH());
 				childrenTemp.add(sep);
 				childrenTemp.add(leafi);
-				separatorPos = separatorPos+separatorWidth+newLeafSideLenght;
+				separatorPos = separatorPos+separatorWidth+newLeafSideLength;
 			}
 			Panel lastNewChild = childrenTemp.get(childrenTemp.size()-1);
-			lastNewChild.setW(lastNewChild.getW()+ (oldChildW-nr*newLeafSideLenght-(nr-1)*separatorWidth));	// handle rounding errors
+			lastNewChild.setW(lastNewChild.getW()+ (oldChildW-nr*newLeafSideLength-(nr-1)*separatorWidth));	// handle rounding errors
 		}
 		
 		if(horizontalSplit == horizontallySplitable)	// if container's split direction = direction of current split: add a child
