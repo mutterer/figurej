@@ -623,7 +623,7 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 			180 / Math.PI + ((xVals[3] < xVals[0]) ? 180 : 0);
 
 		Line top = new Line(xVals[0], yVals[0], xVals[3], yVals[3]);
-		double scaleFactor = imagePlus.getWidth() / top.getRawLength();
+		double scaleFactor = panelWidth / top.getRawLength();
 
 		// Create new image
 		// TODO Refactor to new method

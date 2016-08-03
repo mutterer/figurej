@@ -64,9 +64,8 @@ public class MyImageMath {
 
 		// finally crop the transformed image to the panel dimension
 		ImagePlus result = imageScienceImage.imageplus();
-		result.setRoi((int)(result.getWidth() - panelW/scaleFactor) / 2, (int)(result.getHeight() -
-			panelH/scaleFactor) / 2, (int)(panelW/scaleFactor), (int)(panelH/scaleFactor));
-		result.show();
+		result.setRoi((result.getWidth() - panelW) / 2, (result.getHeight() -
+			panelH) / 2, panelW, panelH);
 		ImageProcessor ipresult = result.getProcessor().crop().resize(panelW,
 			panelH);
 
