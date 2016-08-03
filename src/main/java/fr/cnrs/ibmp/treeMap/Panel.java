@@ -15,9 +15,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.cnrs.ibmp.utilities.LabelPosition;
-
 import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.labels.LabelPosition;
 
 public abstract class Panel implements Serializable{
 	private static final long serialVersionUID = 1L;

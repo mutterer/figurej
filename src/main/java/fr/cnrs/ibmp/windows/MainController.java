@@ -24,7 +24,7 @@ import fr.cnrs.ibmp.OpenFigureEvent;
 import fr.cnrs.ibmp.SaveFigureEvent;
 import fr.cnrs.ibmp.SaveFigureListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
-import fr.cnrs.ibmp.plugIns.LabelDrawer;
+import fr.cnrs.ibmp.labels.AbstractLabelDrawer;
 import fr.cnrs.ibmp.windows.FigureControlPanel;
 import ij.CommandListener;
 import ij.Executer;
@@ -82,7 +82,6 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 
 	/** TODO Documentation */
 	// private JButton removeScalebarButton;
-	private LabelDrawer labelDraw = new LabelDrawer();
 
 	/** TODO Documentation */
 	// object that controls storing and reopening result images
@@ -156,9 +155,6 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 
 			panelWindow.setVisible(true);
 		}
-		
-		// Initialize LabelDrawer
-		labelDraw.setCount(-1);
 	}
 	
 	@Override
@@ -595,11 +591,15 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 	public void actionPerformed(ActionEvent e) {
 		JButton optionsButton = (JButton) e.getSource();
 
-		if (optionsWindow == null)
-			optionsWindow = new AnnotationsAndOptionsPanel(
-					optionsButton.getLocation().x + 50,
-					optionsButton.getParent().getLocation().y + optionsButton.getLocation().y
-							+ 30);
+		if (optionsWindow == null) optionsWindow = new AnnotationsAndOptionsPanel(
+			optionsButton.getLocation().x + 50, optionsButton.getParent()
+				.getLocation().y + optionsButton.getLocation().y + 30);
+
+		// HACK the panel shouldn't have a reference to the mainWindow
+		optionsWindow.setMainWindow(mainWindow);
+		optionsWindow.setActivePanel(activePanel);
+		
+		figureJTool.addLeafListener(optionsWindow);
 
 		optionsWindow.setVisible(true);
 	}

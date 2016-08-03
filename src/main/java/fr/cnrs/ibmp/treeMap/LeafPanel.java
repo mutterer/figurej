@@ -19,9 +19,9 @@ import java.awt.Font;
 import java.text.DecimalFormat;
 import java.util.List;
 
-import fr.cnrs.ibmp.utilities.LabelPosition;
 import fr.cnrs.ibmp.windows.MainController;
 import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.labels.LabelPosition;
 
 /**
  * Panel that shows an image and contains a link to a {@link DataSource}. It cannot have any children. 

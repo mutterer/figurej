@@ -25,13 +25,19 @@ import javax.swing.event.ChangeListener;
 
 import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
-import fr.cnrs.ibmp.plugIns.LabelDrawer;
+import fr.cnrs.ibmp.labels.AbstractLabelDrawer;
+import fr.cnrs.ibmp.labels.LabelDrawer;
+import fr.cnrs.ibmp.labels.LabelPosition;
+import fr.cnrs.ibmp.labels.LabelType;
+import fr.cnrs.ibmp.labels.LatinNumeralLabelDrawer;
+import fr.cnrs.ibmp.labels.LowercaseLabelDrawer;
+import fr.cnrs.ibmp.labels.RomanNumeralLabelDrawer;
+import fr.cnrs.ibmp.labels.UppercaseLabelDrawer;
+import fr.cnrs.ibmp.labels.UserDefinedLabelDrawer;
 import fr.cnrs.ibmp.plugIns.Link;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.treeMap.SeparatorPanel;
 import fr.cnrs.ibmp.utilities.Constants;
-import fr.cnrs.ibmp.utilities.LabelPosition;
-import fr.cnrs.ibmp.utilities.LabelType;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -42,6 +48,10 @@ import ij.gui.Toolbar;
 
 /**
  * window opened by the options button of the panel window
+ * 
+ * @author Jerome Mutter
+ * @author Edda Zink
+ * @author Stefan Helfrich
  */
 public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
@@ -72,7 +82,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	private MainWindow mainWindow;
 
 	/** TODO Documentation */
-	private LabelDrawer labelDraw = new LabelDrawer();
+	private LabelDrawer labelDrawer;
 
 	private JPanel optionsPanel = new JPanel();
 	// text labels
@@ -208,30 +218,52 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	}
 
 	/**
+	 * TODO Documentation
+	 * 
 	 * settings of the buttons, combo boxes labels .. handling text label
 	 * design
 	 */
+	@SuppressWarnings("unchecked")
 	private void initLabelGUI() {
-		disableUserDefinedLabelsInputField(true);
+		disableUserDefinedLabelsInputField();
 
-		Iterator<String> itr = LabelDrawer.getPositionTypes().iterator();
+		// Initialize UI for LabelPosition
+		Iterator<String> itr = AbstractLabelDrawer.getPositionTypes().iterator();
 		while (itr.hasNext())
 			labelPositionSelector.addItem(itr.next());
 		labelPositionSelector.setSelectedItem("TopLeft");
 
-		itr = LabelDrawer.getLabelTypes().iterator();
+		// Initialize UI for LabelType
+		itr = AbstractLabelDrawer.getLabelTypes().iterator();
 		while (itr.hasNext())
 			labelTypeSelector.addItem(itr.next());
+		
+		// Set default LabelType
 		labelTypeSelector.setSelectedItem("ABC");
 
 		labelTypeSelector.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				// Set labelDrawer according to the selection
+				// TODO Remove really, really dirty implementation
+				if (((String) labelTypeSelector.getSelectedItem()).equals(LabelType.ABC.toString())) {
+					labelDrawer = new UppercaseLabelDrawer();
+				} else if (((String) labelTypeSelector.getSelectedItem()).equals(LabelType.abc.toString())) {
+					labelDrawer = new LowercaseLabelDrawer();
+				} else if (((String) labelTypeSelector.getSelectedItem()).equals(LabelType._123.toString())) {
+					labelDrawer = new LatinNumeralLabelDrawer();
+				} else if (((String) labelTypeSelector.getSelectedItem()).equals(LabelType.I_II_III.toString())) {
+					labelDrawer = new RomanNumeralLabelDrawer();
+				} else if (((String) labelTypeSelector.getSelectedItem()).equals(LabelType.userDefined.toString())) {
+					labelDrawer = new UserDefinedLabelDrawer();
+				}
+				
+				// Enable input field for user defined labels
 				if ((labelTypeSelector.getSelectedItem() + "")
 						.equals(LabelType.userDefined.toString()))
-					disableUserDefinedLabelsInputField(false);
+					enableUserDefinedLabelsInputField();
 				else
-					disableUserDefinedLabelsInputField(true);
+					disableUserDefinedLabelsInputField();
 			}
 		});
 	}
@@ -322,35 +354,52 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 		});
 	}
 
-	/** display a new text label on the active panel */
+	/**
+	 * Adds a new label to the currently active panel.
+	 * 
+	 * @param reset
+	 * @param backwards
+	 */
 	public void addPanelLabel(boolean reset, boolean backwards) {
-		if (labelTypeSelector.getSelectedItem().toString()
-				.equals(LabelType.userDefined.toString()))
-			labelDraw.setUserLabels(userDefinedLabelsInputField.getText());
+		if (labelTypeSelector.getSelectedItem().toString().equals(
+			LabelType.userDefined.toString()))
+		{
+			// HACK
+			if (labelDrawer instanceof UserDefinedLabelDrawer) {
+				((UserDefinedLabelDrawer) labelDrawer).setUserLabels(
+					userDefinedLabelsInputField.getText());
+			}
+		}
 
-		String label = labelDraw.getLabel(
-				labelTypeSelector.getSelectedItem() + "", reset, backwards);
-		activePanel.setLabel(
-				mainWindow.getImagePlus(),
-				label,
-				stringToNr(xLabelOffset, activePanel.getW() / 2),
-				stringToNr(yLabelOffset, activePanel.getH() / 2),
-				LabelPosition.valueOf(labelPositionSelector
+		// TODO Add reset and backwards functionality
+//		String label = labelDrawer.next(
+//				labelTypeSelector.getSelectedItem() + "", reset, backwards);
+		if (labelDrawer.hasNext()) {
+			String label = labelDrawer.next();
+			activePanel.setLabel(mainWindow.getImagePlus(), label, stringToNr(
+				xLabelOffset, activePanel.getW() / 2), stringToNr(yLabelOffset,
+					activePanel.getH() / 2), LabelPosition.valueOf(labelPositionSelector
 						.getSelectedItem() + ""));
+		}
 	}
 
-	/** allow the user to type own label strings in a text field or not */
-	private void disableUserDefinedLabelsInputField(boolean disable) {
-		if (disable) {
+	/**
+	 * Disables and hides text field for entering a sequence of custom labels.
+	 */
+	private void disableUserDefinedLabelsInputField() {
 			userDefinedLabelsMessage.setEnabled(false);
 			userDefinedLabelsInputField.setVisible(false);
 			userDefinedLabelsInputField.setToolTipText(null);
-		} else {
-			userDefinedLabelsMessage.setEnabled(true);
-			userDefinedLabelsInputField.setVisible(true);
-			userDefinedLabelsInputField
-					.setToolTipText("insert your own labels, separate by semicolon");
-		}
+	}
+
+	/**
+	 * Enables and shows text field for entering a sequence of custom labels.
+	 */
+	private void enableUserDefinedLabelsInputField() {
+		userDefinedLabelsMessage.setEnabled(true);
+		userDefinedLabelsInputField.setVisible(true);
+		userDefinedLabelsInputField
+				.setToolTipText("insert your own labels, separate by semicolon");
 	}
 
 	/** find good value depending on slider position */
@@ -585,6 +634,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 				public void actionPerformed(ActionEvent e) {
 					activePanel.removeLabel(mainWindow.getImagePlus()
 							.getOverlay());
+
 					mainWindow.draw();
 				}
 			});
@@ -619,21 +669,30 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	public void leafResized(LeafEvent e) { /* NB */ }
 
 	@Override
-	public void leafCleared(LeafEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void leafCleared(LeafEvent e) { /* NB */ }
 
 	@Override
-	public void leafRemoved(LeafEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void leafRemoved(LeafEvent e) { /* NB */ }
 
 	@Override
-	public void leafSplit(LeafEvent e) {
-		// TODO Auto-generated method stub
-		
+	public void leafSplit(LeafEvent e) { /* NB */ }
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param mainWindow
+	 */
+	public void setMainWindow(MainWindow mainWindow) {
+		this.mainWindow = mainWindow;
+	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param activePanel
+	 */
+	public void setActivePanel(LeafPanel activePanel) {
+		this.activePanel = activePanel;
 	}
 
 }
