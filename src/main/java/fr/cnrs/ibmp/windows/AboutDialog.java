@@ -15,7 +15,7 @@ public class AboutDialog implements PlugIn {
 	private GenericDialog gd;
 
 	/**
-	 * Constructs a default About dialog.
+	 * Constructs an {@link AboutDialog}.
 	 */
 	protected AboutDialog() {
 		gd = new GenericDialog("About FigureJ");

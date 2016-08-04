@@ -10,8 +10,12 @@ import ij.ImagePlus;
 /**
  * Specifies the closing behavior of the {@link ImagePlus} that is processed
  * with the {@link ROIToolWindow}.
+ * <p>
+ * (c) IBMP-CNRS
+ * </p>
  * 
- * @author
+ * @author Edda Zinck
+ * @author Jerome Mutterer
  */
 public class SelectionWindowClosingAdapter extends WindowAdapter {
 
