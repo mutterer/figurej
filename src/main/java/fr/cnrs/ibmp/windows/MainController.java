@@ -2,7 +2,6 @@
 
 package fr.cnrs.ibmp.windows;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
@@ -22,13 +21,15 @@ import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.NewFigureEvent;
 import fr.cnrs.ibmp.NewFigureListener;
 import fr.cnrs.ibmp.OpenFigureEvent;
+import fr.cnrs.ibmp.OpenFigureListener;
 import fr.cnrs.ibmp.SaveFigureEvent;
 import fr.cnrs.ibmp.SaveFigureListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
-import fr.cnrs.ibmp.labels.AbstractLabelDrawer;
-import fr.cnrs.ibmp.windows.FigureControlPanel;
 import fr.cnrs.ibmp.serialize.DefaultSerializer;
 import fr.cnrs.ibmp.serialize.Serializer;
+import fr.cnrs.ibmp.treeMap.LeafPanel;
+import fr.cnrs.ibmp.treeMap.Panel;
+import fr.cnrs.ibmp.utilities.Constants;
 import ij.CommandListener;
 import ij.Executer;
 import ij.IJ;
@@ -43,18 +44,13 @@ import ij.gui.PolygonRoi;
 import ij.gui.Toolbar;
 import ij.plugin.frame.Recorder;
 import ij.process.FloatPolygon;
-import fr.cnrs.ibmp.treeMap.LeafPanel;
-import fr.cnrs.ibmp.treeMap.Panel;
-import fr.cnrs.ibmp.utilities.Constants;
-import fr.cnrs.ibmp.utilities.MyImageMath;
-import fr.cnrs.ibmp.utilities.Serializer;
 
 /**
  * TODO Documentation
  * 
  * @author Stefan Helfrich
  */
-public class MainController implements Serializable, NewFigureListener, SaveFigureListener,
+public class MainController implements Serializable, NewFigureListener, SaveFigureListener, OpenFigureListener,
 	WindowListener, CommandListener, IJEventListener, ImageListener, LeafListener, ActionListener, ImageSelectionListener
 {
 
@@ -102,7 +98,7 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 	/** Currently active LeafPanel */
 	private LeafPanel activePanel;
 
-	private FigureJ_Tool figureJTool;
+	private transient FigureJ_Tool figureJTool;
 
 	/** TODO Remove this! */
 	private ImagePlus openedImage;
@@ -117,6 +113,8 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		
 		this.newOpenSaveFrame = new NewOpenSaveFrame();
 		this.newOpenSaveFrame.addNewFigureListener(this);
+		this.newOpenSaveFrame.addOpenFigureListener(this);
+		this.newOpenSaveFrame.addSaveFigureListener(this);
 		
 		this.newFigureDialog = new NewFigureDialog();
 		this.newOpenSaveFrame.addNewFigureListener(this.newFigureDialog);
@@ -166,7 +164,8 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 	public void saveFigure(SaveFigureEvent e) {
 		// assuming the figure is the active window !! remove the ROI showing which
 		// panel is selected
-		IJ.run("Select None");
+//		IJ.run("Select None");
+		mainWindow.killRoi();
 		
 		serializer.serialize(mainWindow);
 		mainWindow.draw(); // show scale bars and labels again

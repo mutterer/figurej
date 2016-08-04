@@ -36,8 +36,9 @@ import fr.cnrs.ibmp.dataSets.DataSource;
 
 /**
  * TODO Documentation
- * 
+ * <p>
  * (c) IBMP-CNRS
+ * </p>
  * 
  * @author Edda Zinck
  * @author Jerome Mutterer

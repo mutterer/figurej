@@ -95,21 +95,21 @@ public class NewOpenSaveFrame extends JFrame {
 
 		});
 
-		buttonSave.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				notifySaveFigure(new SaveFigureEvent(this));
-			}
-
-		});
-
 		buttonOpen.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setOpenNewButtonsStates(false);
 				notifyOpenFigure(new OpenFigureEvent(this));
+			}
+
+		});
+
+		buttonSave.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				notifySaveFigure(new SaveFigureEvent(this));
 			}
 
 		});
