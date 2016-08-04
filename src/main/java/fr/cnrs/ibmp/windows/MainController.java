@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.Serializable;
 
 import javax.swing.JButton;
 
@@ -26,6 +27,8 @@ import fr.cnrs.ibmp.SaveFigureListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.labels.AbstractLabelDrawer;
 import fr.cnrs.ibmp.windows.FigureControlPanel;
+import fr.cnrs.ibmp.serialize.DefaultSerializer;
+import fr.cnrs.ibmp.serialize.Serializer;
 import ij.CommandListener;
 import ij.Executer;
 import ij.IJ;
@@ -51,10 +54,12 @@ import fr.cnrs.ibmp.utilities.Serializer;
  * 
  * @author Stefan Helfrich
  */
-public class MainController implements NewFigureListener, SaveFigureListener,
+public class MainController implements Serializable, NewFigureListener, SaveFigureListener,
 	WindowListener, CommandListener, IJEventListener, ImageListener, LeafListener, ActionListener, ImageSelectionListener
 {
 
+	private static final long serialVersionUID = 1L;
+	
 	/** TODO Documentation */
 	private MainWindow mainWindow;
 
@@ -85,7 +90,7 @@ public class MainController implements NewFigureListener, SaveFigureListener,
 
 	/** TODO Documentation */
 	// object that controls storing and reopening result images
-	private Serializer serializer = new Serializer();
+	private Serializer serializer = new DefaultSerializer();
 
 	/** TODO Documentation */
 	// creates macros if opened images are pre-processed by the user
