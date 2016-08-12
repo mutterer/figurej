@@ -152,6 +152,7 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 			verticalSize /= 1.5;
 		}
 
+		// TODO Keep externally set coordinates
 		// calculate a centered position
 		double xOffset = w / 2 - horizontalSize / 2;
 		double yOffset = h / 2 - verticalSize / 2;
@@ -673,6 +674,17 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 	public void leafSelected(LeafEvent e) {
 		LeafPanel panel = (LeafPanel) e.getSource();
 		updateDimensions(panel.getW(), panel.getH());
+		updateCoordinates(panel.getImgData().getSourceX(), panel.getImgData().getSourceY());
+	}
+
+	/**
+	 * Updates the coordinates of the corners of the rectangular ROI.
+	 * 
+	 * @param sourceX x coordinates of ROI
+	 * @param sourceY y coordinates of ROI
+	 */
+	private void updateCoordinates(double[] sourceX, double[] sourceY) {
+		setCoords(sourceX, sourceY);
 	}
 
 	/**

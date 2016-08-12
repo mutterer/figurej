@@ -4,11 +4,13 @@ package fr.cnrs.ibmp.dataSets;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Arrays;
 
 import javax.swing.event.EventListenerList;
 
 import fr.cnrs.ibmp.DataSourceEvent;
 import fr.cnrs.ibmp.DataSourceListener;
+import fr.cnrs.ibmp.treeMap.LeafPanel;
 
 /**
  * Information storage for individual panels of an image. This includes in
@@ -31,8 +33,8 @@ public class DataSource implements Serializable {
 	private String 		externalSource 		= "";
 
 	// coordinates of the region that got selected and displayed in the panel the dataSource belongs to
-	private double[] 	sourceX;
-	private double[] 	sourceY;		
+	private double[] sourceX = new double[4];
+	private double[] sourceY = new double[4];
 
 	// notes stored in a text file when the figure is saved
 	private String 		notes = "";	
@@ -72,11 +74,6 @@ public class DataSource implements Serializable {
 	private double		upperDisplRange = -1;
 
 	private String		macroString = "";
-
-	public DataSource() {
-		this.sourceX = null;
-		this.sourceY = null;
-	}
 
 	private EventListenerList listeners = new EventListenerList();
 
@@ -353,5 +350,19 @@ public class DataSource implements Serializable {
 
 	public void addListener(DataSourceListener listener) {
 		listeners.add(DataSourceListener.class, listener);
+	}
+
+	/**
+	 * Invalidates the stored coordinates of the selection ROI by setting
+	 * {@link #sourceX} and {@link #sourceX}.
+	 * <p>
+	 * This method is usually called when the size of the {@link LeafPanel}
+	 * associated with {@code this} changes. In that case the coordinates cannot
+	 * be reused.
+	 * </p>
+	 */
+	public void invalidateCoordinates() {
+		sourceX = null;
+		sourceY = null;
 	}
 }

@@ -7,6 +7,8 @@ import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,6 +49,7 @@ import ij.process.FloatPolygon;
 import imagescience.transform.Affine;
 import loci.formats.FormatException;
 import loci.plugins.BF;
+import loci.plugins.in.ImagePlusReader;
 import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
 import loci.plugins.in.ImporterPrompter;
@@ -518,7 +521,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 				|| (activePanel.getImgData().getFileName().isEmpty())) {
 			// Active panel is empty. Show file chooser
 			OpenDialog opener = new OpenDialog("Choose an image to fill your panel with!", "");
-			if (opener.getFileName() != "") {
+			if (opener.getFileName() != null && !opener.getFileName().equals("")) {
 				activePanel.getImgData().setExternalSource(""); // b/c an new image datasource was just selected.
 				activePanel.getImgData().setFileDirectory(opener.getDirectory());
 				activePanel.getImgData().setFileName(opener.getFileName());
@@ -534,93 +537,79 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 		String path = activePanel.getImgData().getFileDirectory() + activePanel.getImgData().getFileName();
 
-		// TODO improve robustness for complex types, eg. lif datasets
-		// as handled by bioformats!!
-
-		// TODO Improve the way files are loaded.
-		Opener ijOpener = new Opener();
-		openedImage = ijOpener.openImage(path); // Uses Bio-Formats if required and available
-		
-		// TODO Properly store data
-//			activePanel.getImgData().setSelectedSerie(selectedSerie);
-		
+		// TODO Split up into several try/catch blocks
 		try {
-			ImporterOptions options = new ImporterOptions();
+			// Set some sensible default options
+			ImporterOptions options = getDefaultImporterOptions();
 			options.setId(path);
-			options.setFirstTime(false);
-			options.setUpgradeCheck(false);
-			options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
+
+			// Configure/prepare the import process
 			ImportProcess process = new ImportProcess(options);
-			new ImporterPrompter(process);
 			process.execute();
+
+			// Get the options that have been used in the end
 			options = process.getOptions();
-			options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
 
 			if (newImage) {
-			// Get selected series with the highest index
-				int seriesCount = process.getSeriesCount();
-				int highestSelectedSeriesIndex = 0;
-				for (int i = 0; i < seriesCount; i++) {
-					if (options.isSeriesOn(i))
-						highestSelectedSeriesIndex = i;
-				}
-				
+				// Get selected series with the highest index
+				int highestSelectedSeriesIndex = getHighestSelectedSeriesIndex(process);
+
 				// Store information in DataSource
 				activePanel.getImgData().setSelectedSerie(highestSelectedSeriesIndex);
-				// IJ.log("" + selectedSerie);
+
+				if (IJ.debugMode) {
+					IJ.log("" + highestSelectedSeriesIndex);
+				}
 			} else {
+				// Try to load the series with the highest previously selected index
 				options.clearSeries();
 				options.setSeriesOn(activePanel.getImgData().getSelectedSerie(), true);
 			}
 
 			// Open the selected series with the highest index
-			ImagePlus[] imps = BF.openImagePlus(options);
+			ImagePlusReader reader = new ImagePlusReader(process);
+			ImagePlus[] imps = reader.openImagePlus();
 			openedImage = imps[imps.length - 1];
 		} catch (FormatException e) {
+			// TODO Make a multi-catch with switch to Java 7/8
 			e.printStackTrace();
 			IJ.log("Bioformats had problems reading this file.");
+			handleImageOpenFailure();
+			return;
 		} catch (IOException e) {
+		// TODO Make a multi-catch with switch to Java 7/8
 			e.printStackTrace();
 			IJ.log("Bioformats had problems reading this file.");
-		}
-
-		if (openedImage == null) {
-			tryToCatchImageOpenFailure(nrOfOpenImgs); // grab files that are opened, not returned by opening software (e.g. old lsm reader)
-		}
-
-		if (openedImage == null) { // if strange file was selected, go back to the main window
 			handleImageOpenFailure();
 			return;
 		}
 
+		// Update position in the opened image according the stored information
 		if (!newImage) {
 			openedImage.setPosition(activePanel.getImgData().getChannel(), activePanel.getImgData().getSlice(),
 					activePanel.getImgData().getFrame());
 		}
-		
+
+		// Finally, show image
 		openedImage.show();
 
+		// Activate ROIToolWindow on active image
 		Toolbar toolbar = Toolbar.getInstance();
 		toolbar.setTool(ROIToolWindow.toolName);
-		
-		ROIToolWindow selectionWindow = (ROIToolWindow) Toolbar.getPlugInTool();
 
-		// use old ROI coordinates if panel size did not change
-		if (activePanel.getImgData().getSourceX() != null && activePanel.getImgData().getSourceY() != null)
-			selectionWindow.setCoords(activePanel.getImgData().getSourceX(), activePanel.getImgData().getSourceY());
-
+		// TODO What does this do?
 		// try to use the same roi on different image
-		if (reuseGeometry) {
-			FloatPolygon r = getRoiGeometryOnly();
-			double[] x = new double[4];
-			double[] y = new double[4];
-			for (int i = 0; i < x.length; i++) {
-				x[i] = r.xpoints[i];
-				y[i] = r.ypoints[i];
-			}
-
-			selectionWindow.setCoords(x, y);
-		}
+//		if (reuseGeometry) {
+//			FloatPolygon r = getRoiGeometryOnly();
+//			double[] x = new double[4];
+//			double[] y = new double[4];
+//			for (int i = 0; i < x.length; i++) {
+//				x[i] = r.xpoints[i];
+//				y[i] = r.ypoints[i];
+//			}
+//
+//			selectionWindow.setCoords(x, y);
+//		}
 
 		if (openedImage.getCanvas() == null) {
 			tryToCatchImageOpenFailure(nrOfOpenImgs);
@@ -633,15 +622,14 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			handleImageOpenFailure();
 			return;
 		}
+
 		openedImage.getWindow().setLocation(
 			mainController.getPanelDimension().width + Constants.guiBorder + 30,
 				mainController.getNewOpenSaveFrame().getHeight()
 						+ mainController.getNewOpenSaveFrame().getLocation().y + Constants.guiBorder
 						+ 20);
 
-		// removed, we do not want to reapply preprocessing automatically
-		// IJ.runMacro(activePanel.getImgData().getMacro());
-
+		// TODO ???
 		if (openedImage.isComposite()) {
 			IJ.doCommand("Channels Tool...");
 			if (activePanel.getImgData().getActChs() == "")
@@ -651,10 +639,45 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 						+ activePanel.getImgData().getActChs() + "');");
 		}
 
+		// TODO ???
 		activePanel.getImgData().setFileDirectory(activePanel.getImgData().getFileDirectory());
 		activePanel.getImgData().setFileName(activePanel.getImgData().getFileName());
-		openedImage.getWindow().addWindowListener(
-				new SelectionWindowClosingAdapter());
+
+		// Add closing adapter
+		openedImage.getWindow().addWindowListener(new SelectionWindowClosingAdapter());
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	private ImporterOptions getDefaultImporterOptions()
+		throws IOException
+	{
+		ImporterOptions options = new ImporterOptions();
+		options.setFirstTime(false);
+		options.setUpgradeCheck(false);
+		options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
+		return options;
+	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param process
+	 * @return
+	 */
+	private int getHighestSelectedSeriesIndex(ImportProcess process)
+	{
+		int seriesCount = process.getSeriesCount();
+		int highestSelectedSeriesIndex = 0;
+		for (int i = 0; i < seriesCount; i++) {
+			if (process.getOptions().isSeriesOn(i)) {
+				highestSelectedSeriesIndex = i;
+			}
+		}
+		return highestSelectedSeriesIndex;
 	}
 
 	private void tryToCatchImageOpenFailure(int nrOfOpenImgs) {
@@ -847,6 +870,21 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	@Override
 	public void dataSourceChanged(DataSourceEvent e) {
 		setGUIImageFrameValues((DataSource) e.getSource());
+	}
+
+	/**
+	 * Specifies the closing behavior of the {@link ImagePlus} that is processed
+	 * with the {@link ROIToolWindow}.
+	 */
+	public class SelectionWindowClosingAdapter extends WindowAdapter {
+
+		@Override
+		public void windowClosing(WindowEvent wEvent) {
+			// Restore state of UI
+			setROIToolOpenable(true);
+			setControlFrameButtonStates(true);
+		}
+
 	}
 
 }

@@ -527,7 +527,10 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 	public void leafDeselected(LeafEvent e) { /* NB */ }
 
 	@Override
-	public void leafResized(LeafEvent e) { /* NB */ }
+	public void leafResized(LeafEvent e) {
+		LeafPanel leafPanel = (LeafPanel) e.getSource();
+		leafPanel.getImgData().invalidateCoordinates();
+	}
 
 	public void setFigureJTool(FigureJ_Tool figureJTool) {
 		this.figureJTool = figureJTool;

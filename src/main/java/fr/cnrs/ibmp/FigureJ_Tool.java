@@ -42,7 +42,7 @@ public class FigureJ_Tool extends PlugInTool {
 	private EventListenerList listeners = new EventListenerList();
 
 	// click behavior
-	private boolean reactOnRelease = true;
+	private boolean reactOnRelease = false;
 
 	/** Currently active LeafPanel */
 	private LeafPanel activePanel;
