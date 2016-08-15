@@ -29,6 +29,8 @@ import javax.swing.event.EventListenerList;
 
 import fr.cnrs.ibmp.DataSourceEvent;
 import fr.cnrs.ibmp.DataSourceListener;
+import fr.cnrs.ibmp.ImageSelectionEvent;
+import fr.cnrs.ibmp.ImageSelectionListener;
 import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.SeparatorEvent;
@@ -64,7 +66,7 @@ import loci.plugins.in.ImporterPrompter;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public class FigureControlPanel extends JFrame implements LeafListener, SeparatorListener, DataSourceListener {
+public class FigureControlPanel extends JFrame implements LeafListener, SeparatorListener, DataSourceListener, ImageSelectionListener {
 
 	//split leaf panels
 	private JButton splitHButton;
@@ -124,6 +126,9 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		fillComboBoxes();
 		addPanelWindowToolTips();
 
+		ROIToolWindow roiTool = mainController.getRoiTool();
+		roiTool.addImageSelectionListener(this);
+		
 		setGUIImageFrameValues(null);
 		setNotesListener();
 
@@ -377,11 +382,21 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			// selection tool if necessary
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (openedImage.isComposite()
-						&& WindowManager.getFrame("Channels") != null)
-					( WindowManager.getFrame("Channels"))
-							.dispose();
-//				cleanGUIandTransferROI();
+				// TODO Decrease code duplication
+				setROIToolOpenable(false);
+				setControlFrameButtonStates(false);
+
+				if (openedImage.isComposite() && WindowManager.getFrame("Channels") != null)
+					(WindowManager.getFrame("Channels")).dispose();
+
+				ROIToolWindow roiTool = (ROIToolWindow) Toolbar.getPlugInTool();
+				roiTool.extractRegion();
+
+				// Close openedImage
+				openedImage.close();
+
+				// Switch to FigureJ Tool
+				mainController.activateFigureJTool();
 			}
 		});
 
@@ -390,6 +405,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		imageCancelButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				// TODO Decrease code duplication
 				// do not transfer the selected pixels, clear/close the
 				// recorder and close the channel selection tool if
 				// necessary
@@ -402,8 +418,11 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 				if (openedImage.isComposite() && WindowManager.getFrame(
 					"Channels") != null) (WindowManager.getFrame("Channels")).dispose();
 
-				// TODO Close openedImage
+				// Close openedImage
 				openedImage.close();
+				
+				// Switch to FigureJ Tool
+				mainController.activateFigureJTool();
 			}
 		});
 
@@ -644,7 +663,6 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			}
 		}
 
-		// TODO ???
 		imgData.setFileDirectory(imgData.getFileDirectory());
 		imgData.setFileName(imgData.getFileName());
 
@@ -899,12 +917,26 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		@Override
 		public void windowClosing(WindowEvent wEvent) {
 			// TODO Clear DataSource iff the cropped image has not been transferred
+			// FIXME Improve getting a ROIToolWindow instance
+
+			ROIToolWindow roiTool = mainController.getRoiTool();
+			if (!roiTool.wasRegionExtracted()) {
+				if (IJ.showMessageWithCancel("Transfer selection?", "Do you want to transfer the selection?"))
+					roiTool.extractRegion();
+			}
 
 			// Restore state of UI
 			setROIToolOpenable(true);
 			setControlFrameButtonStates(true);
 		}
 
+	}
+
+	@Override
+	public void imageSelected(ImageSelectionEvent e) {
+		// Restore state of UI
+		setROIToolOpenable(true);
+		setControlFrameButtonStates(true);
 	}
 
 }

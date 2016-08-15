@@ -121,6 +121,8 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 
 	private int panelHeight;
 
+	private boolean regionExtracted = false;
+	
 	protected static Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
 
 	/**
@@ -142,6 +144,8 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 
 	public void init(ImagePlus imp) {
 		this.imagePlus = imp;
+
+		regionExtracted = false;
 
 		// set size of the ROI
 		double w = imp.getWidth();
@@ -221,18 +225,7 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 		// Create cropped image
 		int count = e.getClickCount();
 		if (count == 2) {
-			ImagePlus generatedCroppedImagePlus = generateCroppedImagePlus();
-			
-			boolean[] activeChannels = null;
-			if (imp.isComposite()) {
-				activeChannels = ((CompositeImage) imp).getActiveChannels();
-			}
-			
-			notifyImageSelected(new ImageSelectionEvent(generatedCroppedImagePlus,
-				xVals, yVals, getRecordedChanges(), activeChannels==null?new boolean[0]:activeChannels));
-
-			reset();
-
+			extractRegion();
 			return;
 		}
 
@@ -668,18 +661,32 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-			ImagePlus generatedCroppedImagePlus = generateCroppedImagePlus();
-
-			boolean[] activeChannels = null;
-			if (imagePlus.isComposite()) {
-				activeChannels = ((CompositeImage) imagePlus).getActiveChannels();
-			}
-			
-			notifyImageSelected(new ImageSelectionEvent(generatedCroppedImagePlus,
-				xVals, yVals, getRecordedChanges(), activeChannels==null?new boolean[0]:activeChannels));
-
-			reset();
+			extractRegion();
 		}
+	}
+
+	/**
+	 * Crops the {@link ImagePlus} currently associated with {@code this} and
+	 * fires an {@link ImageSelectionEvent}.
+	 * <p>
+	 * Therefore, callers should add themselves as {@link ImageSelectionListener}
+	 * before actually calling the method.
+	 * </p>
+	 */
+	public void extractRegion() {
+		ImagePlus generatedCroppedImagePlus = generateCroppedImagePlus();
+
+		boolean[] activeChannels = null;
+		if (imagePlus.isComposite()) {
+			activeChannels = ((CompositeImage) imagePlus).getActiveChannels();
+		}
+		
+		notifyImageSelected(new ImageSelectionEvent(generatedCroppedImagePlus,
+			xVals, yVals, getRecordedChanges(), activeChannels==null?new boolean[0]:activeChannels));
+
+		regionExtracted = true;
+		
+		reset();
 	}
 
 	@Override
@@ -772,5 +779,12 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 
 	public void removeImageSelectionListener(ImageSelectionListener listener) {
 		listeners.remove(ImageSelectionListener.class, listener);
+	}
+
+	/**
+	 * Returns information about whether the region has been extracted.
+	 */
+	public boolean wasRegionExtracted() {
+		return regionExtracted;
 	}
 }

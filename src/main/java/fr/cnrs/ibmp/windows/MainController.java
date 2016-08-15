@@ -555,8 +555,38 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		IJ.showStatus("done.");
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param roiTool
+	 */
 	public void setRoiTool(ROIToolWindow roiTool) {
 		this.selectionWindow = roiTool;
+	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @return
+	 */
+	public ROIToolWindow getRoiTool() {
+		return selectionWindow;
+	}
+
+	/**
+	 * TODO Documentation
+	 */
+	public void activateRoiTool() {
+		Toolbar toolbar = Toolbar.getInstance();
+		toolbar.setTool(ROIToolWindow.toolName);
+	}
+
+	/*
+	 * TODO Documentation
+	 */
+	public void activateFigureJTool() {
+		Toolbar toolbar = Toolbar.getInstance();
+		toolbar.setTool(figureJTool.getToolName());
 	}
 
 }
