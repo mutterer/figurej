@@ -395,9 +395,14 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 				// necessary
 				setROIToolOpenable(true);
 				setControlFrameButtonStates(true);
+				
+				// TODO Clear macro recorder
+				
+				// TODO Close Channels Tool
 				if (openedImage.isComposite() && WindowManager.getFrame(
 					"Channels") != null) (WindowManager.getFrame("Channels")).dispose();
 
+				// TODO Close openedImage
 				openedImage.close();
 			}
 		});
@@ -515,27 +520,29 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		setROIToolOpenable(false); // handle buttons
 		setControlFrameButtonStates(false); // again buttons
 
+		DataSource imgData = activePanel.getImgData();
+		
 		int nrOfOpenImgs = WindowManager.getImageCount();
 		boolean newImage = false;
-		if ((activePanel.getImgData().getFileDirectory().isEmpty())
-				|| (activePanel.getImgData().getFileName().isEmpty())) {
+		if ((imgData.getFileDirectory().isEmpty())
+				|| (imgData.getFileName().isEmpty())) {
 			// Active panel is empty. Show file chooser
 			OpenDialog opener = new OpenDialog("Choose an image to fill your panel with!", "");
 			if (opener.getFileName() != null && !opener.getFileName().equals("")) {
-				activePanel.getImgData().setExternalSource(""); // b/c an new image datasource was just selected.
-				activePanel.getImgData().setFileDirectory(opener.getDirectory());
-				activePanel.getImgData().setFileName(opener.getFileName());
+				imgData.setExternalSource(""); // b/c an new image datasource was just selected.
+				imgData.setFileDirectory(opener.getDirectory());
+				imgData.setFileName(opener.getFileName());
 				newImage = true;
 			} else {
-				activePanel.getImgData().setFileDirectory("");
-				activePanel.getImgData().setFileName("");
-				activePanel.getImgData().setCoords(new double[4], new double[4]);
+				imgData.setFileDirectory("");
+				imgData.setFileName("");
+				imgData.setCoords(new double[4], new double[4]);
 				setROIToolOpenable(true);
 				return;
 			}
 		}
 
-		String path = activePanel.getImgData().getFileDirectory() + activePanel.getImgData().getFileName();
+		String path = imgData.getFileDirectory() + imgData.getFileName();
 
 		// TODO Split up into several try/catch blocks
 		try {
@@ -555,7 +562,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 				int highestSelectedSeriesIndex = getHighestSelectedSeriesIndex(process);
 
 				// Store information in DataSource
-				activePanel.getImgData().setSelectedSerie(highestSelectedSeriesIndex);
+				imgData.setSelectedSerie(highestSelectedSeriesIndex);
 
 				if (IJ.debugMode) {
 					IJ.log("" + highestSelectedSeriesIndex);
@@ -563,7 +570,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			} else {
 				// Try to load the series with the highest previously selected index
 				options.clearSeries();
-				options.setSeriesOn(activePanel.getImgData().getSelectedSerie(), true);
+				options.setSeriesOn(imgData.getSelectedSerie(), true);
 			}
 
 			// Open the selected series with the highest index
@@ -586,8 +593,8 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 		// Update position in the opened image according the stored information
 		if (!newImage) {
-			openedImage.setPosition(activePanel.getImgData().getChannel(), activePanel.getImgData().getSlice(),
-					activePanel.getImgData().getFrame());
+			openedImage.setPosition(imgData.getChannel(), imgData.getSlice(),
+					imgData.getFrame());
 		}
 
 		// Finally, show image
@@ -596,7 +603,9 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		// Activate ROIToolWindow on active image
 		Toolbar toolbar = Toolbar.getInstance();
 		toolbar.setTool(ROIToolWindow.toolName);
-
+		int toolId = toolbar.getToolId(ROIToolWindow.toolName);
+		toolbar.setTool(toolId);
+		
 		// TODO What does this do?
 		// try to use the same roi on different image
 //		if (reuseGeometry) {
@@ -615,33 +624,29 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			tryToCatchImageOpenFailure(nrOfOpenImgs);
 		}
 
-		if (openedImage.getCanvas() == null) { // if trying to open strange
-			// files, e.g. java class
-			// files (the imagePlus
+		if (openedImage.getCanvas() == null) {
+			// if trying to open strange files, e.g. java class files (the imagePlus
 			// itself != null: do nothing and return to the main window
 			handleImageOpenFailure();
 			return;
 		}
 
-		openedImage.getWindow().setLocation(
-			mainController.getPanelDimension().width + Constants.guiBorder + 30,
-				mainController.getNewOpenSaveFrame().getHeight()
-						+ mainController.getNewOpenSaveFrame().getLocation().y + Constants.guiBorder
-						+ 20);
+		// Place the new image sensibly on screen
+		openedImage.getWindow().setLocation(computeOptimalImageLocation());
 
-		// TODO ???
+		// Activate the channels that were open when storing an image
 		if (openedImage.isComposite()) {
-			IJ.doCommand("Channels Tool...");
-			if (activePanel.getImgData().getActChs() == "")
-				IJ.runMacro("Stack.setDisplayMode('composite');Stack.setActiveChannels('11111111');");
-			else
-				IJ.runMacro("Stack.setDisplayMode('composite');Stack.setActiveChannels('"
-						+ activePanel.getImgData().getActChs() + "');");
+			openedImage.setDisplayMode(IJ.COMPOSITE); // TODO Required?
+			if (imgData.getActChs() == "") {
+				openedImage.setActiveChannels("11111111");
+			} else {
+				openedImage.setActiveChannels(imgData.getActChs());
+			}
 		}
 
 		// TODO ???
-		activePanel.getImgData().setFileDirectory(activePanel.getImgData().getFileDirectory());
-		activePanel.getImgData().setFileName(activePanel.getImgData().getFileName());
+		imgData.setFileDirectory(imgData.getFileDirectory());
+		imgData.setFileName(imgData.getFileName());
 
 		// Add closing adapter
 		openedImage.getWindow().addWindowListener(new SelectionWindowClosingAdapter());
@@ -662,6 +667,19 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		return options;
 	}
 
+	/**
+	 * Computes the optimal location for a new image that is opened with respect
+	 * to the main panel.
+	 * 
+	 * @return Optimal location for a new image
+	 */
+	private Point computeOptimalImageLocation() {
+		return new Point(mainController.getPanelDimension().width + Constants.guiBorder + 30,
+			mainController.getNewOpenSaveFrame().getHeight()
+					+ mainController.getNewOpenSaveFrame().getLocation().y + Constants.guiBorder
+					+ 20);
+	}
+	
 	/**
 	 * TODO Documentation
 	 * 
@@ -880,6 +898,8 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 		@Override
 		public void windowClosing(WindowEvent wEvent) {
+			// TODO Clear DataSource iff the cropped image has not been transferred
+
 			// Restore state of UI
 			setROIToolOpenable(true);
 			setControlFrameButtonStates(true);

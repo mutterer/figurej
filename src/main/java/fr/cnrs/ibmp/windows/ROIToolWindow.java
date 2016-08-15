@@ -19,6 +19,7 @@ import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.utilities.MyImageMath;
+import ij.CompositeImage;
 import ij.IJ;
 import ij.IJEventListener;
 import ij.ImagePlus;
@@ -221,8 +222,14 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 		int count = e.getClickCount();
 		if (count == 2) {
 			ImagePlus generatedCroppedImagePlus = generateCroppedImagePlus();
+			
+			boolean[] activeChannels = null;
+			if (imp.isComposite()) {
+				activeChannels = ((CompositeImage) imp).getActiveChannels();
+			}
+			
 			notifyImageSelected(new ImageSelectionEvent(generatedCroppedImagePlus,
-				xVals, yVals, getRecordedChanges()));
+				xVals, yVals, getRecordedChanges(), activeChannels==null?new boolean[0]:activeChannels));
 
 			reset();
 
@@ -662,8 +669,16 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 			ImagePlus generatedCroppedImagePlus = generateCroppedImagePlus();
+
+			boolean[] activeChannels = null;
+			if (imagePlus.isComposite()) {
+				activeChannels = ((CompositeImage) imagePlus).getActiveChannels();
+			}
+			
 			notifyImageSelected(new ImageSelectionEvent(generatedCroppedImagePlus,
-				xVals, yVals, getRecordedChanges()));
+				xVals, yVals, getRecordedChanges(), activeChannels==null?new boolean[0]:activeChannels));
+
+			reset();
 		}
 	}
 

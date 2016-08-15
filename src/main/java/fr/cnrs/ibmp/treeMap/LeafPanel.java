@@ -393,7 +393,7 @@ public class LeafPanel extends Panel {
 	}
 
 	private void removeROICoords() {
-		imgData.setCoords(null, null);
+		// imgData.setCoords(null, null);
 	}
 
 	/**

@@ -31,6 +31,7 @@ import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.treeMap.Panel;
 import fr.cnrs.ibmp.utilities.Constants;
 import ij.CommandListener;
+import ij.CompositeImage;
 import ij.Executer;
 import ij.IJ;
 import ij.IJEventListener;
@@ -313,90 +314,6 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		if (optionsWindow != null)
 			optionsWindow.dispose();
 	}
-	
-	/**
-	 * the pixels inside the ROI are rotated and scaled to the size of the panel
-	 * the image belongs to. the pixel data is passed to the panel, the main
-	 * window is set active again; the panels are repainted.
-	 * 
-	 * @param macro TODO Documentation
-	 */
-	private void transferROIDataToPanel(String macro) {
-		Panel temp = mainWindow.getSelectedPanel();
-
-		if (temp != null)
-			if (temp.getClass().getName().contains(LeafPanel.class.getName())) {
-				// Remember the size and position of the image fragment the user selected
-				double[] xVals = selectionWindow.getXVals().clone();
-				double[] yVals = selectionWindow.getYVals().clone();
-
-				// Save coordinates of source ROI for use with external tools
-				saveRoiCoordinates(xVals, yVals);
-
-				LeafPanel selectedPanel = (LeafPanel) temp;
-	
-				// store detailed information about the image the user chose for a panel
-				DataSource imageData = selectedPanel.getImgData();
-				imageData.setCoords(xVals, yVals);
-				imageData.setPixelCalibration(
-						openedImage.getCalibration().pixelWidth, openedImage
-								.getCalibration().getUnit());
-				imageData.setMacro(macro);
-				imageData.setDisplayRange(openedImage.getDisplayRangeMin(),
-						openedImage.getDisplayRangeMax());
-
-				// position in stack like and composite images
-				imageData.setSlice(openedImage.getSlice());
-				imageData.setChannel(openedImage.getChannel());
-				imageData.setFrame(openedImage.getFrame());
-				WindowManager.setTempCurrentImage(openedImage);
-				imageData
-						.setActChs(IJ
-								.runMacro("ch='';if (is('composite')) Stack.getActiveChannels(ch);return ch;"));
-
-//				filePathLabel.setText(imageData.getFileDirectory()
-//						+ imageData.getFileName());
-				// / TODO: DEBUG FROM HERE
-				// / IJ.log(imageData.getFileDirectory() +
-				// imageData.getFileName());
-
-				float[] xRect = new float[xVals.length];
-				float[] yRect = new float[xVals.length];
-
-				for (int i = 0; i < xRect.length; i++) {
-					xRect[i] = (float) xVals[i];
-					yRect[i] = (float) yVals[i];
-				}
-
-				PolygonRoi boundingRect = new PolygonRoi(new FloatPolygon(
-						xRect, yRect), PolygonRoi.POLYGON);
-
-				double angle = Math.atan((yVals[3] - yVals[0])
-						/ (xVals[3] - xVals[0]))
-						* 180 / Math.PI + ((xVals[3] < xVals[0]) ? 180 : 0);
-
-				Line top = new Line(xVals[0], yVals[0], xVals[3], yVals[3]);
-				double scaleFactor = selectedPanel.getW() / top.getRawLength();
-
-				// FILL THE PANEL with the pixels selected from the image
-//				selectedPanel.setPixels(MyImageMath.getPixels(openedImage,
-//						boundingRect, angle, scaleFactor, selectedPanel.getW(),
-//						selectedPanel.getH(), getSelectedInterpolation()));
-				// calculate the calibration
-				imageData.setPixelCalibration(
-						(1 / scaleFactor)
-								* openedImage.getCalibration().pixelWidth,
-						openedImage.getCalibration().getUnit());
-				imageData.setAngle(angle);
-				imageData.setScaleFactor(scaleFactor);
-				// IJ.log(""+Arrays.toString(xVals));
-				mainWindow.draw();
-				mainWindow.getImagePlus().killRoi();
-			}
-
-		panelWindow.setROIToolOpenable(true);
-		panelWindow.setControlFrameButtonStates(true);
-	}
 
 	/**
 	 * TODO Documentation
@@ -407,7 +324,8 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 	 * @param macro
 	 */
 	private void transferROIDataToPanel(final ImagePlus selectedImage,
-		final double[] xVals, final double[] yVals, final String macro)
+		final double[] xVals, final double[] yVals, final String macro,
+		final String activeChannels)
 	{
 		if ((mainWindow.getSelectedPanel() != null) &&
 			(mainWindow.getSelectedPanel() instanceof LeafPanel))
@@ -434,8 +352,8 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 			imageData.setChannel(selectedImage.getChannel());
 			imageData.setFrame(selectedImage.getFrame());
 			WindowManager.setTempCurrentImage(selectedImage);
-			imageData.setActChs(IJ.runMacro(
-				"ch='';if (is('composite')) Stack.getActiveChannels(ch);return ch;"));
+
+			imageData.setActChs(activeChannels);
 
 			float[] xRect = new float[xValsCopy.length];
 			float[] yRect = new float[xValsCopy.length];
@@ -470,6 +388,14 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		panelWindow.setControlFrameButtonStates(true);
 	}
 
+	private String getActiveChannelString(boolean[] activeChannels) {
+		char[] string = new char[activeChannels.length];
+		for (int i=0; i < activeChannels.length; ++i)
+			string[i] = activeChannels[i] ? '1' : '0';
+		
+		return new String(string);
+	}
+
 	/**
 	 * @param xVals
 	 * @param yVals
@@ -486,33 +412,6 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 
 		Prefs.set("figurej.xRoi", xRoi);
 		Prefs.set("figurej.yRoi", yRoi);
-	}
-
-	public void cleanGUIandTransferROI() {
-
-		String recordedMacro = "";
-
-		if (recorder != null) {
-			recordedMacro = recorder.getText();
-			try {
-				recorder.close();
-			} catch (Exception e2) {
-				System.err.println("recorder nullpointer");
-			}
-		}
-		// fire custom progress bar b/c some transforms are slow
-		Thread t = new Thread(new CustomProgressBar());
-		t.start();
-		try {
-			transferROIDataToPanel(recordedMacro);
-		} catch (Exception e1) {
-			IJ.error("Could not transform image.\n" + e1.getMessage());
-		}
-		openedImage.close();
-		IJ.run("Select None");
-		t.interrupt();
-
-		IJ.showStatus("done.");
 	}
 
 	@Override
@@ -617,12 +516,24 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 
 	@Override
 	public void imageSelected(ImageSelectionEvent e) {
+		// TODO Remove obselete code
+//		String recordedMacro = "";
+//
+//		if (recorder != null) {
+//			recordedMacro = recorder.getText();
+//			try {
+//				recorder.close();
+//			} catch (Exception e2) {
+//				System.err.println("recorder nullpointer");
+//			}
+//		}
+		
 		// fire custom progress bar b/c some transforms are slow
 		Thread t = new Thread(new CustomProgressBar());
 		t.start();
 		try {
 			transferROIDataToPanel((ImagePlus) e.getSource(), e.getxVals(), e
-				.getyVals(), e.getMacro());
+				.getyVals(), e.getMacro(), getActiveChannelString(e.getActiveChannels()));
 		}
 		catch (Exception e1) {
 			IJ.error("Could not transform image.\n" + e1.getMessage());
@@ -636,6 +547,12 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		
 		// Select the FigureJ Tool
 		Toolbar.getInstance().setTool(figureJTool.getToolName());
+		
+		// TODO Close the opened image
+//		openedImage.close();
+//		IJ.run("Select None");
+
+		IJ.showStatus("done.");
 	}
 
 	public void setRoiTool(ROIToolWindow roiTool) {
