@@ -3,6 +3,7 @@
 package fr.cnrs.ibmp.windows;
 
 import java.awt.BorderLayout;
+import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -44,7 +45,9 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.gui.Toolbar;
+import ij.gui.WaitForUserDialog;
 import ij.io.OpenDialog;
 import ij.io.Opener;
 import ij.process.FloatPolygon;
@@ -917,12 +920,18 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		@Override
 		public void windowClosing(WindowEvent wEvent) {
 			// TODO Clear DataSource iff the cropped image has not been transferred
-			// FIXME Improve getting a ROIToolWindow instance
+			
 
+			// FIXME Improve getting a ROIToolWindow instance
 			ROIToolWindow roiTool = mainController.getRoiTool();
 			if (!roiTool.wasRegionExtracted()) {
-				if (IJ.showMessageWithCancel("Transfer selection?", "Do you want to transfer the selection?"))
+				GenericDialog gd = new GenericDialog("Transfer selection?", IJ.getInstance());
+				gd.addMessage("Do you want to transfer the selection?");
+				gd.showDialog();
+
+				if (gd.wasOKed()) {
 					roiTool.extractRegion();
+				}
 			}
 
 			// Restore state of UI
