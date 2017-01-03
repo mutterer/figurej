@@ -8,6 +8,7 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.io.Serializable;
 import java.net.URL;
 
 import javax.swing.ImageIcon;
@@ -50,7 +51,9 @@ import ij.process.ImageProcessor;
  * @author Jerome Mutterer
  * @author Stefan Helfrich
  */
-public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListener, IJEventListener {
+public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListener, IJEventListener, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	/** TODO Documentation */
 	private EventListenerList listeners = new EventListenerList();

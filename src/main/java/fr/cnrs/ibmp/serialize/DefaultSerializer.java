@@ -15,6 +15,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.nio.channels.FileChannel;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +36,9 @@ import fr.cnrs.ibmp.dataSets.DataSource;
  * @author Jerome Mutterer
  * @author Stefan Helfrich (University of Konstanz)
  */
-public class DefaultSerializer implements Serializer {
+public class DefaultSerializer implements Serializer, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private final static String serFileExtension = ".figurej";
 	private static String roiFileName = "RoiSet.zip";

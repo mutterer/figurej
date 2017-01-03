@@ -1,5 +1,7 @@
 package fr.cnrs.ibmp.windows;
 
+import java.io.Serializable;
+
 import fr.cnrs.ibmp.NewFigureEvent;
 import fr.cnrs.ibmp.NewFigureListener;
 import ij.IJ;
@@ -16,7 +18,9 @@ import ij.gui.GenericDialog;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public class NewFigureDialog implements NewFigureListener {
+public class NewFigureDialog implements NewFigureListener, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private double printedWidth = 0;
 	private double printedHeight = 0;
