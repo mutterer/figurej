@@ -919,24 +919,12 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 		@Override
 		public void windowClosing(WindowEvent wEvent) {
-			// TODO Clear DataSource iff the cropped image has not been transferred
-			
-
-			// FIXME Improve getting a ROIToolWindow instance
-			ROIToolWindow roiTool = mainController.getRoiTool();
-			if (!roiTool.wasRegionExtracted()) {
-				GenericDialog gd = new GenericDialog("Transfer selection?", IJ.getInstance());
-				gd.addMessage("Do you want to transfer the selection?");
-				gd.showDialog();
-
-				if (gd.wasOKed()) {
-					roiTool.extractRegion();
-				}
-			}
-
 			// Restore state of UI
 			setROIToolOpenable(true);
 			setControlFrameButtonStates(true);
+			
+			// Activate the FigureJTool
+			mainController.activateFigureJTool();
 		}
 
 	}
