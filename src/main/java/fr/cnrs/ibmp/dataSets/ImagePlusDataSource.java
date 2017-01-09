@@ -26,4 +26,9 @@ public class ImagePlusDataSource extends ImageDataSource implements
 		return s;
 	}
 
+	@Override
+	public String getStringRepresentation() {
+		return "ImagePlus";
+	}
+
 }

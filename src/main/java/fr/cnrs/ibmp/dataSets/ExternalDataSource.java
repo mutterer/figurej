@@ -49,4 +49,9 @@ public class ExternalDataSource extends AbstractDataSource implements
 		return s;
 	}
 
+	@Override
+	public String getStringRepresentation() {
+		return "External";
+	}
+
 }

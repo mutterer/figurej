@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.Serializable;
 
 /**
- * File-based {@link DataSourceInterface}.
+ * File-based {@link DataSource}.
  * 
  * @author Stefan Helfrich
  */
@@ -115,6 +115,11 @@ public class FileDataSource extends ImageDataSource implements Serializable {
 		s += "-------------------------\n";
 
 		return s;
+	}
+
+	@Override
+	public String getStringRepresentation() {
+		return getFileDirectory() + "," + getFileName();
 	}
 
 }

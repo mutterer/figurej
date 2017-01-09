@@ -465,8 +465,8 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 	 * get a list containing every dataSource used in the panel/tree structure
 	 * (one for each leaf)
 	 */
-	public List<FileDataSource> getDataSources() {
-		ArrayList<FileDataSource> list = new ArrayList<FileDataSource>();
+	public List<DataSource> getDataSources() {
+		List<DataSource> list = new ArrayList<DataSource>();
 		rootPanel.getDataSources(list);
 		return list;
 	}

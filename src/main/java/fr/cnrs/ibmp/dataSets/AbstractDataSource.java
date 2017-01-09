@@ -7,11 +7,11 @@ import fr.cnrs.ibmp.DataSourceEvent;
 import fr.cnrs.ibmp.DataSourceListener;
 
 /**
- * Abstract super class for {@link DataSourceInterface} implementations.
+ * Abstract super class for {@link DataSource} implementations.
  * 
  * @author Stefan Helfrich (University of Konstanz)
  */
-public abstract class AbstractDataSource implements DataSourceInterface {
+public abstract class AbstractDataSource implements DataSource {
 
 	// notes stored in a text file when the figure is saved
 	private String notes = "";
@@ -40,24 +40,22 @@ public abstract class AbstractDataSource implements DataSourceInterface {
 	 */
 	public AbstractDataSource() {}
 
-	/**
-	 * @return notes written to the panels's notes field on the GUI or empty
-	 *         string
-	 */
+	@Override
 	public String getNotes() {
 		return notes;
 	}
 
-	/**@return pixel width in @see getUnit() units */
+	@Override
 	public double getPixelWidth() {
 		return pixelWidth;
 	}
-	/**@return measure of the pixel width */
+
+	@Override
 	public String getUnit() {
 		return calibrationUnit;
 	}
 	
-	/** @param text notes on the image (e.g. from the GUI notes field) */
+	@Override
 	public void setNotes(String text) {
 		notes = text;
 	}
@@ -66,16 +64,16 @@ public abstract class AbstractDataSource implements DataSourceInterface {
 	 * @param pixelSize
 	 * @param unit */
 	public void setPixelCalibration(double pixelSize, String unit) {
-		this.calibrationUnit = unit;
+		calibrationUnit = unit;
 		pixelWidth = pixelSize;
 	}
 
-	/**@param label String label of the panel or "" */
+	@Override
 	public void setLabel(String label) {
 		this.label = label;
 	}
 
-	/**@param sInfo length of the scale bar, -1 if no scale bar */
+	@Override
 	public void setScalebarLength(double l) {
 		if(l <= 0)
 			scalebarInfo = "";

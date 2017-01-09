@@ -299,9 +299,10 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	 */
 	private void setGUIImageFrameValues(final DataSource dataSource) {
 		if (dataSource != null) {
-			if (!dataSource.getFileDirectory().isEmpty())
-				filePathLabel.setText(dataSource.getFileDirectory()
-						+ dataSource.getFileName());
+			if (!dataSource.getFileDirectory().isEmpty()) {
+				filePathLabel.setText(dataSource.getFileDirectory() + dataSource
+					.getFileName());
+			}
 			notes.setText(dataSource.getNotes());
 		}
 	}
@@ -544,7 +545,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		setROIToolOpenable(false); // handle buttons
 		setControlFrameButtonStates(false); // again buttons
 
-		FileDataSource imgData = activePanel.getImgData();
+		DataSource imgData = activePanel.getImgData();
 
 		int nrOfOpenImgs = WindowManager.getImageCount();
 		boolean newImage = false;

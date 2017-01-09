@@ -20,13 +20,14 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 import fr.cnrs.ibmp.windows.MainController;
+import fr.cnrs.ibmp.windows.MainWindow;
 import fr.cnrs.ibmp.dataSets.AbstractDataSource;
-import fr.cnrs.ibmp.dataSets.DataSourceInterface;
+import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.dataSets.FileDataSource;
 import fr.cnrs.ibmp.labels.LabelPosition;
 
 /**
- * Panel that shows an image and contains a link to a {@link DataSourceInterface}. It cannot have any children. 
+ * Panel that shows an image and contains a link to a {@link DataSource}. It cannot have any children. 
  * 
  * (c) IBMP-CNRS 
  * 
@@ -36,11 +37,13 @@ import fr.cnrs.ibmp.labels.LabelPosition;
 public class LeafPanel extends Panel {
 
 	private static final long serialVersionUID = 1L;
-	private FileDataSource imgData;
+
+	private DataSource imgData;
 	private static int colorValue = 0x99aabb;
 	private int maxW;
 	private int maxH;
 
+	// TODO We might be able to remove this state variable
 	private boolean hasImg = false;
 
 	public boolean isHasImg() {
@@ -63,6 +66,7 @@ public class LeafPanel extends Panel {
 	private LabelPosition labelPos = LabelPosition.TopLeft;
 	private transient ImageProcessor ip = new ColorProcessor(10, 10);
 	private boolean hasLabel = false;
+
 	// scale bar stuff
 	private transient Roi scalebar;
 	private transient Roi scalebarText;
@@ -96,7 +100,6 @@ public class LeafPanel extends Panel {
 
 	public LeafPanel(int xPos, int yPos, int w, int h) {
 		super(xPos, yPos, w, h);
-		imgData = new FileDataSource();
 		maxW = w;
 		maxH = h;
 		updatePixelArray();
@@ -131,6 +134,10 @@ public class LeafPanel extends Panel {
 		updateMetadata();
 	}
 
+	/**
+	 * Writes information about {@link LeafPanel} into the free-text property tag
+	 * of {@link MainWindow} (which is an {@link ImagePlus}.
+	 */
 	private void updateMetadata() {
 		String cal = "1";
 		String unit = "pixel";
@@ -139,11 +146,10 @@ public class LeafPanel extends Panel {
 			unit = "" + imgData.getUnit();
 		} catch (Exception e) {
 		}
+		
 		String panelRoi = "" + xPos + "," + yPos + "," + panelWidth + ","
 				+ panelHeight + "," + cal + "," + unit
-				// +","+imgData.getType() //TODO remove safely
-				+ "," + imgData.getFileDirectory() + ","
-				+ imgData.getFileName();
+				+ "," + imgData.getStringRepresentation();
 
 		ImagePlus imp = WindowManager.getImage((int) Prefs.get("figure.id", 0));
 		if (imp != null) {
@@ -350,11 +356,11 @@ public class LeafPanel extends Panel {
 		return r;
 	}
 
-	public FileDataSource getImgData() {
+	public DataSource getImgData() {
 		return imgData;
 	}
 
-	public void setImgData(final FileDataSource newData) {
+	public void setImgData(final DataSource newData) {
 		imgData = newData;
 	}
 
@@ -380,7 +386,7 @@ public class LeafPanel extends Panel {
 	}
 
 	@Override
-	public List<DataSourceInterface> getDataSources(List<DataSourceInterface> list) {
+	public List<DataSource> getDataSources(List<DataSource> list) {
 		list.add(this.getImgData());
 		return list;
 	}
