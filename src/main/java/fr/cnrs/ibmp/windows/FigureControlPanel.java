@@ -539,11 +539,12 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	 * @param reuseGeometry TODO Documentation
 	 */
 	private void openTiltedROITool(boolean reuseGeometry) {
+		// TODO Rename this method and refactor
 		setROIToolOpenable(false); // handle buttons
 		setControlFrameButtonStates(false); // again buttons
 
 		DataSource imgData = activePanel.getImgData();
-		
+
 		int nrOfOpenImgs = WindowManager.getImageCount();
 		boolean newImage = false;
 		if ((imgData.getFileDirectory().isEmpty())
@@ -675,9 +676,16 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	}
 
 	/**
-	 * @param path
-	 * @return
-	 * @throws IOException
+	 * Composes an {@link ImporterOptions} instance that contains sensible default
+	 * options for opening images with Bio-Formats.
+	 * <p>
+	 * Images are set to be opened as hyperstack. Also, the Bio-Formats upgrade
+	 * check is disabled.
+	 * </p>
+	 * 
+	 * @return An {@link ImporterOptions} instance with default settings
+	 * @throws IOException If there is an issue with opening the default options
+	 *           from file
 	 */
 	private ImporterOptions getDefaultImporterOptions()
 		throws IOException
@@ -720,6 +728,11 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		return highestSelectedSeriesIndex;
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param nrOfOpenImgs
+	 */
 	private void tryToCatchImageOpenFailure(int nrOfOpenImgs) {
 		if (nrOfOpenImgs < 1)
 			return;
