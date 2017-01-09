@@ -41,15 +41,17 @@ public class DefaultSerializer implements Serializer, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final static String serFileExtension = ".figurej";
-	private static String roiFileName = "RoiSet.zip";
+	private final static String roiFileName = "RoiSet.zip";
 
 	@Override
 	public MainWindow deserialize() {
-
+		// TODO Move this to another class?
 		OpenDialog od = new OpenDialog("Select FigureJ file to open", null);
 		String directory = od.getDirectory();
 		String name = od.getFileName();
-		if (name == null) return null;
+		if (name == null) {
+			return null;
+		}
 
 		String fileName = directory + name;
 		// de-serializing of the panel tree and main window
@@ -65,7 +67,6 @@ public class DefaultSerializer implements Serializer, Serializable {
 
 			// if folder containing the source images was moved, adapt the file path
 			for (DataSource d : list) {
-
 				if (!d.getFileDirectory().equals("") && !d.getFileDirectory().equals(
 					directory)) d.setFileDirectory(directory);
 				if ((d.getFileName() == "") || d.getFileName() == null) d
@@ -73,12 +74,16 @@ public class DefaultSerializer implements Serializer, Serializable {
 				if ((d.getFileDirectory() == "") || d.getFileDirectory() == null) d
 					.setFileName("");
 			}
+
 			mainWindow.recover();
 			mainWindow.calibrateImage(mainWindow.getDPI(), "cm");
 
 			// display arrows, scale bars and so on
-			if (new File(directory + roiFileName).exists()) mainWindow
-				.readInOldOveray(directory + roiFileName);
+			File roiFile = new File(directory + roiFileName);
+			if (roiFile.exists()) {
+				mainWindow.readInOldOveray(roiFile);
+			}
+
 			return mainWindow;
 		}
 		catch (IOException e) {

@@ -566,6 +566,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 		String path = imgData.getFileDirectory() + imgData.getFileName();
 
+		// TODO Don't use Bio-Formats per default (due to issues with standard TIFF files)
 		// TODO Split up into several try/catch blocks
 		try {
 			// Set some sensible default options

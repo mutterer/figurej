@@ -1,12 +1,5 @@
 package fr.cnrs.ibmp.treeMap;
 
-/*
- * @author Edda Zinck
- * @author Jerome Mutterer
- * (c) IBMP-CNRS   
- * 
-*/
-
 import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.Roi;
@@ -18,7 +11,16 @@ import java.util.List;
 import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.labels.LabelPosition;
 
-public abstract class Panel implements Serializable{
+/**
+ * Abstract superclass for panels that make up a figure.
+ * <p>
+ * (c) IBMP-CNRS
+ * </p>
+ * @author Edda Zinck
+ * @author Jerome Mutterer
+ */
+public abstract class Panel implements Serializable {
+
 	private static final long serialVersionUID = 1L;
 	protected int xPos;
 	protected int yPos;
@@ -31,8 +33,6 @@ public abstract class Panel implements Serializable{
 
 	protected static int separatorWidth 		= 7;   				
 	protected static int minLeafSideLength 		= 20;
-
-	public final static int snapDist 			= 15;
 
 	public Panel(int xPos, int yPos, int w, int h) {
 		this.parentPanel = null;

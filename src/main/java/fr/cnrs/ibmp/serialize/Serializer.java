@@ -17,7 +17,7 @@ public interface Serializer {
 	 * @return the window the figure is drawn on with images, separators, arrows
 	 *         and so on
 	 */
-	MainWindow deserialize();
+	public MainWindow deserialize();
 
 	/**
 	 * Opens a dialog to select a file name and directory; calls methods to store
@@ -25,6 +25,6 @@ public interface Serializer {
 	 * 
 	 * @param mainWindow
 	 */
-	void serialize(MainWindow mainWindow);
+	public void serialize(MainWindow mainWindow);
 
 }

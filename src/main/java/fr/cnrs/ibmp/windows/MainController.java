@@ -162,7 +162,7 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 	}
 	
 	@Override
-	public void saveFigure(SaveFigureEvent e) {
+	public void saveFigure(final SaveFigureEvent e) {
 		// assuming the figure is the active window !! remove the ROI showing which
 		// panel is selected
 //		IJ.run("Select None");
@@ -172,7 +172,8 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		mainWindow.draw(); // show scale bars and labels again
 	}
 
-	public void openFigure(OpenFigureEvent e) {
+	@Override
+	public void openFigure(final OpenFigureEvent e) {
 		mainWindow = null;
 		mainWindow = serializer.deserialize();
 
@@ -193,7 +194,7 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 			getNewOpenSaveFrame().setOpenNewButtonsStates(true);
 			return;
 		}
-			
+
 		mainWindow.draw();
 	}
 

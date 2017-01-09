@@ -1,16 +1,5 @@
 package fr.cnrs.ibmp.utilities;
 
-/**
- * Handles the extraction of the image region selected with the ROI tool it has
- * to be rotated if the ROI selection tool was tilted and scaled to the size of
- * the panel that will display the selected pixels.
- * 
- * (c) IBMP-CNRS 
- * 
- * @author Edda Zinck
- * @author Jerome Mutterer
- * @author Stefan Helfrich (University of Konstanz)
- */
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.PolygonRoi;
@@ -20,6 +9,17 @@ import imagescience.image.Image;
 import imagescience.transform.Affine;
 import imagescience.transform.Transform;
 
+/**
+ * Handles the extraction of the image region selected with the ROI tool it has
+ * to be rotated if the ROI selection tool was tilted and scaled to the size of
+ * the panel that will display the selected pixels.
+ * <p>
+ * (c) IBMP-CNRS 
+ * </p>
+ * @author Edda Zinck
+ * @author Jerome Mutterer
+ * @author Stefan Helfrich (University of Konstanz)
+ */
 public class MyImageMath {
 
 	public static int[] getPixels(ImagePlus openImage, PolygonRoi boundingRect,

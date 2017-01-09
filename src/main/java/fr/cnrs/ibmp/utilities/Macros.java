@@ -14,14 +14,14 @@ import ij.plugin.MacroInstaller;
  */
 public class Macros {
 
-	public static void installMacroFromJar(String name) {
+	public static void installMacroFromJar(final String filename) {
 		String macro = null;
 		try {
 			ClassLoader pcl = IJ.getClassLoader();
-			InputStream is = pcl.getResourceAsStream("macros/" + name);
+			InputStream is = pcl.getResourceAsStream("macros/" + filename);
 			if (is == null) {
 				IJ.error("FigureJ installMacroFromJar", "Unable to load \""
-						+ name + "\" from jar file");
+						+ filename + "\" from jar file");
 				return;
 			}
 			InputStreamReader isr = new InputStreamReader(is);
