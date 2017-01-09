@@ -20,11 +20,11 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 import fr.cnrs.ibmp.windows.MainController;
-import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.dataSets.DataSourceInterface;
 import fr.cnrs.ibmp.labels.LabelPosition;
 
 /**
- * Panel that shows an image and contains a link to a {@link DataSource}. It cannot have any children. 
+ * Panel that shows an image and contains a link to a {@link DataSourceInterface}. It cannot have any children. 
  * 
  * (c) IBMP-CNRS 
  * 
@@ -34,7 +34,7 @@ import fr.cnrs.ibmp.labels.LabelPosition;
 public class LeafPanel extends Panel {
 
 	private static final long serialVersionUID = 1L;
-	private DataSource imgData;
+	private DataSourceInterface imgData;
 	private static int colorValue = 0x99aabb;
 	private int maxW;
 	private int maxH;
@@ -348,11 +348,11 @@ public class LeafPanel extends Panel {
 		return r;
 	}
 
-	public DataSource getImgData() {
+	public DataSourceInterface getImgData() {
 		return imgData;
 	}
 
-	public void setImgData(DataSource newData) {
+	public void setImgData(final DataSourceInterface newData) {
 		imgData = newData;
 	}
 
@@ -378,7 +378,7 @@ public class LeafPanel extends Panel {
 	}
 
 	@Override
-	public List<DataSource> getDataSources(List<DataSource> list) {
+	public List<DataSourceInterface> getDataSources(List<DataSourceInterface> list) {
 		list.add(this.getImgData());
 		return list;
 	}
@@ -388,7 +388,7 @@ public class LeafPanel extends Panel {
 		// if(imgData.getNotes()!=imgData.defaultNote) {
 		// s += imgData.getFileName()+":\n"+imgData.getNotes()+"\n\n";
 		// }
-		s += imgData.createLog();
+		s += imgData;
 		return s;
 	}
 

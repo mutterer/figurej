@@ -586,7 +586,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 				int highestSelectedSeriesIndex = getHighestSelectedSeriesIndex(process);
 
 				// Store information in DataSource
-				imgData.setSelectedSerie(highestSelectedSeriesIndex);
+				imgData.setSelectedSeries(highestSelectedSeriesIndex);
 
 				if (IJ.debugMode) {
 					IJ.log("" + highestSelectedSeriesIndex);
@@ -594,7 +594,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			} else {
 				// Try to load the series with the highest previously selected index
 				options.clearSeries();
-				options.setSeriesOn(imgData.getSelectedSerie(), true);
+				options.setSeriesOn(imgData.getSelectedSeries(), true);
 			}
 
 			// Open the selected series with the highest index
