@@ -21,6 +21,13 @@ public class FileDataSource extends ImageDataSource implements Serializable {
 	/** selected series from multi-series file formats (e.g. *.lif files). */
 	private int selectedSeries;
 
+	/**
+	 * Creates a {@link FileDataSource} from default values.
+	 */
+	public FileDataSource() {
+		super();
+	}
+
 	public FileDataSource(final FileDataSource dataSource) {
 		super(dataSource);
 

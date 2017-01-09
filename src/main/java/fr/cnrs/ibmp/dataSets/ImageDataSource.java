@@ -54,6 +54,13 @@ public abstract class ImageDataSource extends AbstractDataSource {
 	}
 
 	/**
+	 * Creates an {@link ImageDataSource} from default values.
+	 */
+	public ImageDataSource() {
+		super();
+	}
+
+	/**
 	 * @return x coordinates of the rectangle image region that was selected to
 	 *         fill the panel the dataSource object belongs to with
 	 */

@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.dataSets.DataSourceInterface;
 import fr.cnrs.ibmp.labels.LabelPosition;
 
 /**
@@ -343,7 +343,7 @@ public abstract class Panel implements Serializable {
 
 	/**@param list empty list
 	 * @return the list filled with all objects containing information (path, comment calibration..) about respectively one panel */
-	public List<DataSource> getDataSources(List<DataSource> list) {
+	public List<DataSourceInterface> getDataSources(List<DataSourceInterface> list) {
 		for(Panel p:children)
 			p.getDataSources(list);
 		return list;

@@ -35,6 +35,7 @@ import fr.cnrs.ibmp.treeMap.SeparatorPanel;
 import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.dataSets.FileDataSource;
 
 /**
  * Implements the interactive visualization of the current state of a figure.
@@ -464,8 +465,8 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 	 * get a list containing every dataSource used in the panel/tree structure
 	 * (one for each leaf)
 	 */
-	public List<DataSource> getDataSources() {
-		ArrayList<DataSource> list = new ArrayList<DataSource>();
+	public List<FileDataSource> getDataSources() {
+		ArrayList<FileDataSource> list = new ArrayList<FileDataSource>();
 		rootPanel.getDataSources(list);
 		return list;
 	}

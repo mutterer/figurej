@@ -36,6 +36,11 @@ public abstract class AbstractDataSource implements DataSourceInterface {
 	}
 
 	/**
+	 * Creates an {@link AbstractDataSource} from default values.
+	 */
+	public AbstractDataSource() {}
+
+	/**
 	 * @return notes written to the panels's notes field on the GUI or empty
 	 *         string
 	 */

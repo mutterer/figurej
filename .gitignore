@@ -4,3 +4,7 @@
 .project
 .settings/
 target/
+
+# UML diagrams
+*.ucls
+*.png

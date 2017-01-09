@@ -20,7 +20,9 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 import fr.cnrs.ibmp.windows.MainController;
+import fr.cnrs.ibmp.dataSets.AbstractDataSource;
 import fr.cnrs.ibmp.dataSets.DataSourceInterface;
+import fr.cnrs.ibmp.dataSets.FileDataSource;
 import fr.cnrs.ibmp.labels.LabelPosition;
 
 /**
@@ -34,7 +36,7 @@ import fr.cnrs.ibmp.labels.LabelPosition;
 public class LeafPanel extends Panel {
 
 	private static final long serialVersionUID = 1L;
-	private DataSourceInterface imgData;
+	private FileDataSource imgData;
 	private static int colorValue = 0x99aabb;
 	private int maxW;
 	private int maxH;
@@ -94,7 +96,7 @@ public class LeafPanel extends Panel {
 
 	public LeafPanel(int xPos, int yPos, int w, int h) {
 		super(xPos, yPos, w, h);
-		imgData = new DataSource();
+		imgData = new FileDataSource();
 		maxW = w;
 		maxH = h;
 		updatePixelArray();
@@ -348,11 +350,11 @@ public class LeafPanel extends Panel {
 		return r;
 	}
 
-	public DataSourceInterface getImgData() {
+	public FileDataSource getImgData() {
 		return imgData;
 	}
 
-	public void setImgData(final DataSourceInterface newData) {
+	public void setImgData(final FileDataSource newData) {
 		imgData = newData;
 	}
 

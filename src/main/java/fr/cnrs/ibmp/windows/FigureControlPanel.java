@@ -37,6 +37,7 @@ import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.SeparatorEvent;
 import fr.cnrs.ibmp.SeparatorListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.dataSets.FileDataSource;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.treeMap.Panel;
 import fr.cnrs.ibmp.utilities.Constants;
@@ -543,7 +544,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		setROIToolOpenable(false); // handle buttons
 		setControlFrameButtonStates(false); // again buttons
 
-		DataSource imgData = activePanel.getImgData();
+		FileDataSource imgData = activePanel.getImgData();
 
 		int nrOfOpenImgs = WindowManager.getImageCount();
 		boolean newImage = false;

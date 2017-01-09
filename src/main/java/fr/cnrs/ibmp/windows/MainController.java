@@ -24,7 +24,7 @@ import fr.cnrs.ibmp.OpenFigureEvent;
 import fr.cnrs.ibmp.OpenFigureListener;
 import fr.cnrs.ibmp.SaveFigureEvent;
 import fr.cnrs.ibmp.SaveFigureListener;
-import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.dataSets.FileDataSource;
 import fr.cnrs.ibmp.serialize.DefaultSerializer;
 import fr.cnrs.ibmp.serialize.Serializer;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
@@ -340,7 +340,7 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 
 			// store detailed information about the image the user chose for a panel
 			LeafPanel selectedPanel = (LeafPanel) mainWindow.getSelectedPanel();
-			DataSource imageData = selectedPanel.getImgData();
+			FileDataSource imageData = selectedPanel.getImgData();
 			imageData.setCoords(xValsCopy, yValsCopy);
 			imageData.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
 				selectedImage.getCalibration().getUnit());
@@ -419,7 +419,7 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 	public void leafSelected(LeafEvent e) {
 		if (IJ.altKeyDown()) {
 			LeafPanel leafPanel = (LeafPanel) e.getSource();
-			IJ.log(leafPanel.getImgData().createLog());
+			IJ.log(leafPanel.getImgData().toString());
 		}
 	}
 
