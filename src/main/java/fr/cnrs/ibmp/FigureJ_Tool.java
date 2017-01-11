@@ -157,7 +157,9 @@ public class FigureJ_Tool extends PlugInTool {
 			mainWindow = mainController.getMainWindow();
 		}
 
-		mainWindow.mouseMoved(imp, e);
+		if (mainWindow != null) {
+			mainWindow.mouseMoved(imp, e);
+		}
 	}
 
 	public void addLeafListener(LeafListener listener) {
