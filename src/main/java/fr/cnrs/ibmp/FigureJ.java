@@ -33,24 +33,27 @@ public class FigureJ implements PlugIn {
 			IJ.error("FigureJ", "Some libraries are missing:\n \n" + errorDetails);
 			return;
 		}
-		
+
 		MainController mainController = MainController.getInstance();
-		
+
+		// Clear Toolbar before adding new ones
+		Toolbar.removeMacroTools();
+
 		FigureJ_Tool figureJTool = new FigureJ_Tool();
 		Toolbar.addPlugInTool(figureJTool);
 		mainController.setFigureJTool(figureJTool);
-		
+
 		ROIToolWindow roiTool = new ROIToolWindow();
 		Toolbar.addPlugInTool(roiTool);
 		IJ.addEventListener(roiTool);
 		figureJTool.addLeafListener(roiTool);
 		mainController.setRoiTool(roiTool);
 		roiTool.addImageSelectionListener(mainController);
-		
+
 		// Add some extra tools to the toolbar.
 		Macros.installMacroFromJar("panel_sticking_Tool.ijm");
 		Macros.installMacroFromJar("insets_Tool.ijm");
-		
+
 		// Select the FigureJ Tool
 		Toolbar toolbar = Toolbar.getInstance();
 		toolbar.setTool(figureJTool.getToolName());
