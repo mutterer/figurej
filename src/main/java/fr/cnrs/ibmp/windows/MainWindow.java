@@ -234,7 +234,7 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 			String dimensions = "";
 			for (Panel p : selectedPanel.getParent().getChildren()) {
 				if (!(p instanceof SeparatorPanel))
-					dimensions += String.format("%d.2x%d.2 %s", p.getW() * imp
+					dimensions += String.format("%.2f x %.2f ", p.getW() * imp
 						.getCalibration().pixelWidth, p.getH() * imp
 							.getCalibration().pixelHeight);
 			}
@@ -300,7 +300,6 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 		}
 		mousePressedPoint[0] = canv.offScreenX(e.getX());
 		mousePressedPoint[1] = canv.offScreenY(e.getY());
-
 	}
 
 	public void mouseReleased(ImagePlus imp, MouseEvent e) {
