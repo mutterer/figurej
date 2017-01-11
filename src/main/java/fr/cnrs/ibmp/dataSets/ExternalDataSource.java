@@ -1,19 +1,21 @@
 
 package fr.cnrs.ibmp.dataSets;
 
-import java.io.Serializable;
+import fr.cnrs.ibmp.plugIns.Link;
 
 /**
- * TODO Documentation
+ * An {@link ExternalDataSource} keeps, in addition to a rendered pixel-based
+ * representation of the link's content, a link to the source file such that it
+ * can be re-opened using the known {@link Link}.
  * 
  * @author Stefan Helfrich (University of Konstanz)
  */
-public class ExternalDataSource extends AbstractDataSource implements
-	Serializable
+public class ExternalDataSource extends FileDataSource
 {
 
 	private static final long serialVersionUID = 1L;
 
+	/** File name of the original input file (e.g. SVG). */
 	private String externalSource = "";
 
 	public ExternalDataSource(final ExternalDataSource externalDataSource) {
@@ -22,10 +24,20 @@ public class ExternalDataSource extends AbstractDataSource implements
 		this.externalSource = externalDataSource.getExternalSource();
 	}
 
+	/**
+	 * TODO Documentation
+	 *
+	 * @return
+	 */
 	public String getExternalSource() {
 		return this.externalSource;
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param source
+	 */
 	public void setExternalSource(String source) {
 		this.externalSource = source;
 

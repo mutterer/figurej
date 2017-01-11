@@ -131,91 +131,96 @@ public class DefaultSerializer implements Serializer, Serializable {
 	 * Stores the result as TIFF file in the indicated directory. Creates a folder
 	 * in this directory that has the same name as the TIFF and generates the
 	 * serialize file as well as the overlay and copies of every image used to
-	 * create the result image in that folder. The file path in the dataSources is
-	 * updated.
+	 * create the result image in that folder.
+	 * <p>
+	 * <em>NB: The file paths in the {@link DataSource}s are updated to point to
+	 * copies in the output folder.</em>
+	 * </p>
 	 * 
 	 * @param mainW result image to serialize
-	 * @param dir directory result gets stored in
+	 * @param outputDirectory directory result gets stored in
 	 * @param pureFileName result image file name
 	 */
-	private void storeImageFiles(final MainWindow mainW, final String dir,
+	private void storeImageFiles(final MainWindow mainW, final String outputDirectory,
 		final String pureFileName)
 	{
-		// TODO Use ImageJ's built-in functionality for saving images
-		// save image using the same name as for the serialization file
-		// had to move this a little below, as everything is inside the folder now.
-		String nameOfNewDir=dir;
+		// Save image using the same name as for the serialization file
+		mainW.saveImage(outputDirectory, pureFileName);
 
-		mainW.saveImage(dir,pureFileName);
-
-		// remove the text labels and save the overlay to this folder
+		// Remove the text labels and save the overlay to the output folder
 		mainW.hideAllLabelsAndScalebars();
-		saveOverlay(mainW.getImagePlus(), nameOfNewDir);
+		saveOverlay(mainW.getImagePlus(), outputDirectory);
 
 		List<DataSource> list = mainW.getDataSources();
 		Set<String> filesFound = new HashSet<String>();
 
-		// save copies of all source images to this folder
+		// Save copies of all source images to the output folder
 		for(DataSource dataSource : list) {
 			if (dataSource instanceof FileDataSource) {
 				FileDataSource fileDataSource = (FileDataSource) dataSource;
-				String beforeSavePath = fileDataSource.getFileDirectory();
-				if(fileDataSource.isValid()) {
-					File source = new File(fileDataSource.getFileDirectory()+fileDataSource.getFileName());
-					//if there are files with the same name but stored in different directories, one is renamed 
-					//so that both can be stored in the same directory
-					// TODO What is happening here?
-					for(String s: filesFound)
-						if(s.endsWith(fileDataSource.getFileName()) && !s.equals(fileDataSource.getFileDirectory()+fileDataSource.getFileName())) {
-							{
-								rename(fileDataSource);
-							}
+				String filePath = fileDataSource.getFileDirectory()+fileDataSource.getFileName();
+
+				if (fileDataSource.isValid()) {
+					File source = new File(filePath);
+
+					/* Avoid name clashes from source files: sources can have the same file
+					 * name in different directories. However, attempting to copy them to
+					 * the output folder results in duplicate file names. To avoid this
+					 * situation, duplicate file names are remedied by renaming. */
+					// TODO Improve to use contains
+					for (String s : filesFound) {
+						if (s.endsWith(fileDataSource.getFileName()) && !s.equals(filePath)) {
+							rename(fileDataSource);
+
+							// Update filePath
+							filePath = fileDataSource.getFileDirectory()+fileDataSource.getFileName();
 						}
+					}
+
+					filesFound.add(filePath);
 	
-					filesFound.add(fileDataSource.getFileDirectory()+fileDataSource.getFileName());
-	
-					File duplicate = new File(nameOfNewDir+fileDataSource.getFileName());
+					File duplicate = new File(outputDirectory+fileDataSource.getFileName());
 					try {
 						copyFile(source, duplicate);
-						fileDataSource.setFileDirectory(nameOfNewDir);
+						fileDataSource.setFileDirectory(outputDirectory);
 					}
 					catch (IOException e) {
 						IJ.error("couldn't store "+fileDataSource.getFileName());
 					}
 				}
-			} else if (dataSource instanceof ExternalDataSource) {
-				ExternalDataSource externalDataSource = (ExternalDataSource) dataSource;
-				//String tempDir = System.getProperty("java.io.tmpdir");
-//				File source = new File(beforeSavePath+externalDataSource.getExternalSource());
-//				File duplicate = new File(nameOfNewDir+externalDataSource.getExternalSource());
-//				try {
-//					// IJ.log(source.toString());
-//					// IJ.log(duplicate.toString());
-//					copyFile(source, duplicate);
-//					dataSource.setFileDirectory(nameOfNewDir);
-//				}
-//				catch (IOException e) {
-//					IJ.error("couldn't store "+externalDataSource.getExternalSource());
-//				}
-			}
 
+				if (dataSource instanceof ExternalDataSource) {
+					ExternalDataSource externalDataSource = (ExternalDataSource) dataSource;
+
+					// TODO Avoid name clashes like before
+					File source = new File(externalDataSource.getFileDirectory()+externalDataSource.getExternalSource());
+					File duplicate = new File(outputDirectory+externalDataSource.getExternalSource());
+					try {
+						copyFile(source, duplicate);
+						externalDataSource.setFileDirectory(outputDirectory);
+					} catch (IOException e) {
+						IJ.error("couldn't store "+externalDataSource.getExternalSource());
+					}
+				}
+			}
 		}
 
-		// serialize the panel tree and the main window and store it in the new folder
+		// serialize the panel tree and the main window and store it in the output folder
 		FileOutputStream fos = null;
 		ObjectOutputStream out = null;
 		try {
-			fos = new FileOutputStream(nameOfNewDir+pureFileName+serFileExtension);
+			fos = new FileOutputStream(outputDirectory+pureFileName+serFileExtension);
 			out = new ObjectOutputStream(fos);
 			out.writeObject(mainW);
+			out.flush();
 			out.close();
 		}
 		catch(IOException ex) {
 			ex.printStackTrace();
 		}
 
-		// store a text file with the image notes in the new folder
-		saveImageNotes(nameOfNewDir, mainW);
+		// store a text file with the image notes in the output folder
+		saveImageNotes(outputDirectory, mainW);
 	}
 
 	/**
@@ -225,14 +230,15 @@ public class DefaultSerializer implements Serializer, Serializable {
 	 * @param d data source which has an image that should be renamed
 	 */
 	private void rename(FileDataSource d) {
-		// TODO What is this doing and why?
 		Random r = new Random();
 		String fileName = d.getFileName();
 		String cleanedFileName = removeFileExtension(fileName);
 		String fileExtension = getFileExtension(fileName);
 
 		// add three random numbers as chars; 48 is the ASCII value of 0 
-		d.setFileName(cleanedFileName+"_"+(char)(r.nextInt(25)+97)+(char)(r.nextInt(10)+48)+(char)(r.nextInt(25)+97)+fileExtension);
+		d.setFileName(cleanedFileName + "_" + (char) (r.nextInt(25) + 97) +
+			(char) (r.nextInt(10) + 48) + (char) (r.nextInt(25) + 97) +
+			fileExtension);
 	}
 
 	/**
@@ -290,8 +296,7 @@ public class DefaultSerializer implements Serializer, Serializable {
 				out.write(s);
 				out.flush();
 				out.close();
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				IJ.error("could not store the image notes");
 			}
 		}
