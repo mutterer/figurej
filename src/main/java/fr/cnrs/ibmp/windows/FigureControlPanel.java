@@ -3,14 +3,12 @@
 package fr.cnrs.ibmp.windows;
 
 import java.awt.BorderLayout;
-import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,7 +38,6 @@ import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.dataSets.DataSources;
 import fr.cnrs.ibmp.dataSets.FileDataSource;
 import fr.cnrs.ibmp.dataSets.ImageDataSource;
-import fr.cnrs.ibmp.dataSets.ImagePlusDataSource;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.treeMap.Panel;
 import fr.cnrs.ibmp.utilities.Constants;
@@ -49,19 +46,10 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.Toolbar;
-import ij.gui.WaitForUserDialog;
 import ij.io.OpenDialog;
-import ij.io.Opener;
 import ij.process.FloatPolygon;
 import imagescience.transform.Affine;
-import loci.formats.FormatException;
-import loci.plugins.BF;
-import loci.plugins.in.ImagePlusReader;
-import loci.plugins.in.ImportProcess;
-import loci.plugins.in.ImporterOptions;
-import loci.plugins.in.ImporterPrompter;
 
 /**
  * Control window for panels; allows splitting of panels as well as
@@ -624,6 +612,9 @@ public class FigureControlPanel extends JFrame implements LeafListener,
 
 		// Add closing adapter
 		openedImage.getWindow().addWindowListener(new SelectionWindowClosingAdapter());
+
+		// Update DataSource of LeafPanel
+		activePanel.setImgData(imgData);
 	}
 
 	/**
@@ -863,10 +854,6 @@ public class FigureControlPanel extends JFrame implements LeafListener,
 
 	@Override
 	public void imageSelected(ImageSelectionEvent e) {
-		ImagePlus imp = (ImagePlus) e.getSource();
-		ImagePlusDataSource imagePlusDataSource = new ImagePlusDataSource(imp);
-		activePanel.setImgData(imagePlusDataSource);
-
 		// Restore state of UI
 		setROIToolOpenable(true);
 		setControlFrameButtonStates(true);

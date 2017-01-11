@@ -26,6 +26,7 @@ import fr.cnrs.ibmp.SaveFigureEvent;
 import fr.cnrs.ibmp.SaveFigureListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.dataSets.FileDataSource;
+import fr.cnrs.ibmp.dataSets.ImageDataSource;
 import fr.cnrs.ibmp.dataSets.ImagePlusDataSource;
 import fr.cnrs.ibmp.serialize.DefaultSerializer;
 import fr.cnrs.ibmp.serialize.Serializer;
@@ -342,22 +343,33 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 
 			// store detailed information about the image the user chose for a panel
 			LeafPanel selectedPanel = (LeafPanel) mainWindow.getSelectedPanel();
-//			DataSource imageData = selectedPanel.getImgData();
-			ImagePlusDataSource dataSource = new ImagePlusDataSource();
-			dataSource.setCoords(xValsCopy, yValsCopy);
-			dataSource.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
+			DataSource originalDataSource = selectedPanel.getImgData();
+			ImageDataSource imageDataSource = null;
+			if (originalDataSource != null) {
+				if (originalDataSource instanceof ImageDataSource) {
+					imageDataSource = (ImageDataSource) originalDataSource;
+				} else {
+					return;
+				}
+			} else {
+				imageDataSource = new ImagePlusDataSource(selectedImage);
+				selectedPanel.setImgData(imageDataSource);
+			}
+//			ImagePlusDataSource dataSource = new ImagePlusDataSource();
+			imageDataSource.setCoords(xValsCopy, yValsCopy);
+			imageDataSource.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
 				selectedImage.getCalibration().getUnit());
-			dataSource.setMacro(macro);
-			dataSource.setDisplayRange(selectedImage.getDisplayRangeMin(),
+			imageDataSource.setMacro(macro);
+			imageDataSource.setDisplayRange(selectedImage.getDisplayRangeMin(),
 				selectedImage.getDisplayRangeMax());
 
 			// position in stack like and composite images
-			dataSource.setSlice(selectedImage.getSlice());
-			dataSource.setChannel(selectedImage.getChannel());
-			dataSource.setFrame(selectedImage.getFrame());
+			imageDataSource.setSlice(selectedImage.getSlice());
+			imageDataSource.setChannel(selectedImage.getChannel());
+			imageDataSource.setFrame(selectedImage.getFrame());
 			WindowManager.setTempCurrentImage(selectedImage);
 
-			dataSource.setActChs(activeChannels);
+			imageDataSource.setActChs(activeChannels);
 
 			float[] xRect = new float[xValsCopy.length];
 			float[] yRect = new float[xValsCopy.length];
@@ -379,10 +391,10 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 			selectedPanel.setPixels((int[]) selectedImage.getProcessor().getPixels());
 			
 			// calculate the calibration
-			dataSource.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
+			imageDataSource.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
 				selectedImage.getCalibration().getUnit());
-			dataSource.setAngle(angle);
-			dataSource.setScaleFactor(scaleFactor);
+			imageDataSource.setAngle(angle);
+			imageDataSource.setScaleFactor(scaleFactor);
 
 			mainWindow.draw();
 			mainWindow.getImagePlus().killRoi();

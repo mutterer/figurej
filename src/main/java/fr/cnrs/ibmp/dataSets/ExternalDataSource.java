@@ -18,6 +18,18 @@ public class ExternalDataSource extends FileDataSource
 	/** File name of the original input file (e.g. SVG). */
 	private String externalSource = "";
 
+	/**
+	 * Creates an {@link ExternalDataSource} with default settings.
+	 */
+	public ExternalDataSource() {
+		super();
+	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param externalDataSource
+	 */
 	public ExternalDataSource(final ExternalDataSource externalDataSource) {
 		super(externalDataSource);
 
