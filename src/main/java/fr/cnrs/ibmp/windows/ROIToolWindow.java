@@ -18,6 +18,7 @@ import fr.cnrs.ibmp.ImageSelectionEvent;
 import fr.cnrs.ibmp.ImageSelectionListener;
 import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
+import fr.cnrs.ibmp.dataSets.ImageDataSource;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.utilities.MyImageMath;
 import ij.CompositeImage;
@@ -683,12 +684,12 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 		if (imagePlus.isComposite()) {
 			activeChannels = ((CompositeImage) imagePlus).getActiveChannels();
 		}
-		
+
 		notifyImageSelected(new ImageSelectionEvent(generatedCroppedImagePlus,
 			xVals, yVals, getRecordedChanges(), activeChannels==null?new boolean[0]:activeChannels));
 
 		regionExtracted = true;
-		
+
 		reset();
 	}
 
@@ -699,7 +700,10 @@ public class ROIToolWindow extends PlugInTool implements KeyListener, LeafListen
 	public void leafSelected(LeafEvent e) {
 		LeafPanel panel = (LeafPanel) e.getSource();
 		updateDimensions(panel.getW(), panel.getH());
-		updateCoordinates(panel.getImgData().getSourceX(), panel.getImgData().getSourceY());
+		if (panel.getImgData() instanceof ImageDataSource) {
+			ImageDataSource dataSource = (ImageDataSource) panel.getImgData();
+			updateCoordinates(dataSource.getSourceX(), dataSource.getSourceY());
+		}
 	}
 
 	/**

@@ -2,6 +2,8 @@
 
 package fr.cnrs.ibmp.dataSets;
 
+import fr.cnrs.ibmp.DataSourceEvent;
+import fr.cnrs.ibmp.DataSourceListener;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 
 /**
@@ -82,5 +84,28 @@ public interface DataSource {
 	 * @param text notes on the image (e.g. from the GUI notes field)
 	 */
 	public void setNotes(String text);
+
+	/**
+	 * TODO Documentation
+	 * @return
+	 */
+	public Object open();
+
+	/**
+	 * TODO Documentation
+	 * @param listener
+	 */
+	public void removeListener(DataSourceListener listener);
+
+	/**
+	 * TODO Documentation
+	 * @param listener
+	 */
+	public void addListener(DataSourceListener listener);
+
+	/**
+	 * TODO Documentation
+	 */
+	public void invalidateCoordinates();
 
 }

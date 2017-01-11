@@ -54,4 +54,9 @@ public class ExternalDataSource extends AbstractDataSource implements
 		return "External";
 	}
 
+	@Override
+	public Object open() {
+		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+
 }

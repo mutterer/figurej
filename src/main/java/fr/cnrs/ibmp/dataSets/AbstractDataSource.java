@@ -99,10 +99,12 @@ public abstract class AbstractDataSource implements DataSource {
 			listener.dataSourceChanged(new DataSourceEvent(this));
 	}
 
+	@Override
 	public void removeListener(DataSourceListener listener) {
 		listeners.remove(DataSourceListener.class, listener);
 	}
 
+	@Override
 	public void addListener(DataSourceListener listener) {
 		listeners.add(DataSourceListener.class, listener);
 	}
@@ -117,6 +119,12 @@ public abstract class AbstractDataSource implements DataSource {
 			"\n";
 
 		return s;
+	}
+
+	@Override
+	public void invalidateCoordinates() {
+		// NB: Do nothing
+		// FIXME Can be moved to DataSource when switching to Java8
 	}
 
 }

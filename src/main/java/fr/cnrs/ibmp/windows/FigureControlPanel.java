@@ -37,7 +37,10 @@ import fr.cnrs.ibmp.LeafListener;
 import fr.cnrs.ibmp.SeparatorEvent;
 import fr.cnrs.ibmp.SeparatorListener;
 import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.dataSets.DataSources;
 import fr.cnrs.ibmp.dataSets.FileDataSource;
+import fr.cnrs.ibmp.dataSets.ImageDataSource;
+import fr.cnrs.ibmp.dataSets.ImagePlusDataSource;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.treeMap.Panel;
 import fr.cnrs.ibmp.utilities.Constants;
@@ -64,13 +67,16 @@ import loci.plugins.in.ImporterPrompter;
  * Control window for panels; allows splitting of panels as well as
  * assigning of an image to a panel, open / change this image and select a
  * ROI. contains the method to transfer the ROI pixels to the panel.
- * 
+ * <p>
  * (c) IBMP-CNRS
- * 
+ * </p>
  * @author Edda Zinck
  * @author Jerome Mutterer
+ * @author Stefan Helfrich (University of Konstanz)
  */
-public class FigureControlPanel extends JFrame implements LeafListener, SeparatorListener, DataSourceListener, ImageSelectionListener {
+public class FigureControlPanel extends JFrame implements LeafListener,
+	SeparatorListener, DataSourceListener, ImageSelectionListener
+{
 
 	//split leaf panels
 	private JButton splitHButton;
@@ -278,7 +284,6 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		interpolationType.setSelectedItem(Interpolation.QUINTIC_B_SPLINE.name);
 	}
 
-
 	/**
 	 * TODO Documentation
 	 * 
@@ -298,13 +303,14 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	 * Set image path and image notes.
 	 */
 	private void setGUIImageFrameValues(final DataSource dataSource) {
-		if (dataSource != null) {
-			if (!dataSource.getFileDirectory().isEmpty()) {
-				filePathLabel.setText(dataSource.getFileDirectory() + dataSource
-					.getFileName());
-			}
-			notes.setText(dataSource.getNotes());
+		if (dataSource == null) {
+			filePathLabel.setText("<path>");
+			notes.setText("");
+			return;
 		}
+
+		filePathLabel.setText(dataSource.getStringRepresentation());
+		notes.setText(dataSource.getNotes());
 	}
 
 	/**
@@ -316,17 +322,26 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		notes.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void removeUpdate(DocumentEvent arg0) {
-				activePanel.getImgData().setNotes(notes.getText());
+				DataSource imgData = activePanel.getImgData();
+				if (imgData != null) {
+					imgData.setNotes(notes.getText());
+				}
 			}
 
 			@Override
 			public void insertUpdate(DocumentEvent arg0) {
-				activePanel.getImgData().setNotes(notes.getText());
+				DataSource imgData = activePanel.getImgData();
+				if (imgData != null) {
+					imgData.setNotes(notes.getText());
+				}
 			}
 
 			@Override
 			public void changedUpdate(DocumentEvent arg0) {
-				activePanel.getImgData().setNotes(notes.getText());
+				DataSource imgData = activePanel.getImgData();
+				if (imgData != null) {
+					imgData.setNotes(notes.getText());
+				}
 			}
 		});
 
@@ -452,26 +467,28 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			public void actionPerformed(ActionEvent e) {
 				copiedImageData = activePanel.getImgData();
 
-				if ((e.getModifiers() & ActionEvent.ALT_MASK) != 0) {
-					// TODO dump the roitool coordinates to the roi manager.
-					// TODO later use this in the roi tool....
-					// was suggested by ton timmers.
-					// * suggested workflow:
-					// * on figure panel, alt-copy copies source region roi
-					// only
-					// * then upon alt open or (alt paste), the new
-					// selection tool targets as-similar-as-possible region
-					// * that could fill the target panel...
-
-					float[] x = new float[copiedImageData.getSourceX().length];
-					float[] y = new float[x.length];
-					for (int i = 0; i < x.length; i++) {
-						x[i] = (float) copiedImageData.getSourceX()[i];
-						y[i] = (float) copiedImageData.getSourceY()[i];
+				if (copiedImageData instanceof ImageDataSource) {
+					if ((e.getModifiers() & ActionEvent.ALT_MASK) != 0) {
+						// TODO dump the roitool coordinates to the roi manager.
+						// TODO later use this in the roi tool....
+						// was suggested by ton timmers.
+						// * suggested workflow:
+						// * on figure panel, alt-copy copies source region roi
+						// only
+						// * then upon alt open or (alt paste), the new
+						// selection tool targets as-similar-as-possible region
+						// * that could fill the target panel...
+						
+						ImageDataSource copiedImageDataSource = (ImageDataSource) copiedImageData;
+						float[] x = new float[copiedImageDataSource.getSourceX().length];
+						float[] y = new float[x.length];
+						for (int i = 0; i < x.length; i++) {
+							x[i] = (float) copiedImageDataSource.getSourceX()[i];
+							y[i] = (float) copiedImageDataSource.getSourceY()[i];
+						}
+						setRoiGeometryOnly(new FloatPolygon(x, y, 4));
 					}
-					setRoiGeometryOnly(new FloatPolygon(x, y, 4));
 				}
-
 			}
 		});
 
@@ -483,7 +500,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 				if ((e.getModifiers() & ActionEvent.ALT_MASK) != 0) {
 					openTiltedROITool(true);
 				} else if (copiedImageData != null) {
-					activePanel.setImgData(copiedImageData.clone());
+					activePanel.setImgData(DataSources.newDataSource(copiedImageData));
 					
 					notifyLeafSelected(new LeafEvent(activePanel));
 					openTiltedROITool(false);
@@ -548,82 +565,22 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		DataSource imgData = activePanel.getImgData();
 
 		int nrOfOpenImgs = WindowManager.getImageCount();
-		boolean newImage = false;
-		if ((imgData.getFileDirectory().isEmpty())
-				|| (imgData.getFileName().isEmpty())) {
-			// Active panel is empty. Show file chooser
+		if (imgData == null) {
+			// Active panel is empty. Show file chooser.
 			OpenDialog opener = new OpenDialog("Choose an image to fill your panel with!", "");
 			if (opener.getFileName() != null && !opener.getFileName().equals("")) {
-				imgData.setExternalSource(""); // b/c an new image datasource was just selected.
-				imgData.setFileDirectory(opener.getDirectory());
-				imgData.setFileName(opener.getFileName());
-				newImage = true;
+				FileDataSource fileDataSource = new FileDataSource();
+				fileDataSource.setFileDirectory(opener.getDirectory());
+				fileDataSource.setFileName(opener.getFileName());
+				imgData = fileDataSource;
 			} else {
-				imgData.setFileDirectory("");
-				imgData.setFileName("");
-				imgData.setCoords(new double[4], new double[4]);
 				setROIToolOpenable(true);
 				return;
 			}
 		}
 
-		String path = imgData.getFileDirectory() + imgData.getFileName();
-
-		// TODO Don't use Bio-Formats per default (due to issues with standard TIFF files)
-		// TODO Split up into several try/catch blocks
-		try {
-			// Set some sensible default options
-			ImporterOptions options = getDefaultImporterOptions();
-			options.setId(path);
-
-			// Configure/prepare the import process
-			ImportProcess process = new ImportProcess(options);
-			process.execute();
-
-			// Get the options that have been used in the end
-			options = process.getOptions();
-
-			if (newImage) {
-				// Get selected series with the highest index
-				int highestSelectedSeriesIndex = getHighestSelectedSeriesIndex(process);
-
-				// Store information in DataSource
-				imgData.setSelectedSeries(highestSelectedSeriesIndex);
-
-				if (IJ.debugMode) {
-					IJ.log("" + highestSelectedSeriesIndex);
-				}
-			} else {
-				// Try to load the series with the highest previously selected index
-				options.clearSeries();
-				options.setSeriesOn(imgData.getSelectedSeries(), true);
-			}
-
-			// Open the selected series with the highest index
-			ImagePlusReader reader = new ImagePlusReader(process);
-			ImagePlus[] imps = reader.openImagePlus();
-			openedImage = imps[imps.length - 1];
-		} catch (FormatException e) {
-			// TODO Make a multi-catch with switch to Java 7/8
-			e.printStackTrace();
-			IJ.log("Bioformats had problems reading this file.");
-			handleImageOpenFailure();
-			return;
-		} catch (IOException e) {
-		// TODO Make a multi-catch with switch to Java 7/8
-			e.printStackTrace();
-			IJ.log("Bioformats had problems reading this file.");
-			handleImageOpenFailure();
-			return;
-		}
-
-		// Update position in the opened image according the stored information
-		if (!newImage) {
-			openedImage.setPosition(imgData.getChannel(), imgData.getSlice(),
-					imgData.getFrame());
-		}
-
-		// Finally, show image
+		// Open ImagePlus from DataSource
+		openedImage = (ImagePlus) imgData.open();
 		openedImage.show();
 
 		// Activate ROIToolWindow on active image
@@ -631,20 +588,20 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		toolbar.setTool(ROIToolWindow.toolName);
 		int toolId = toolbar.getToolId(ROIToolWindow.toolName);
 		toolbar.setTool(toolId);
-		
+
 		// TODO What does this do?
 		// try to use the same roi on different image
-//		if (reuseGeometry) {
-//			FloatPolygon r = getRoiGeometryOnly();
-//			double[] x = new double[4];
-//			double[] y = new double[4];
-//			for (int i = 0; i < x.length; i++) {
-//				x[i] = r.xpoints[i];
-//				y[i] = r.ypoints[i];
-//			}
-//
-//			selectionWindow.setCoords(x, y);
-//		}
+		if (imgData instanceof ImageDataSource && reuseGeometry) {
+				FloatPolygon r = getRoiGeometryOnly();
+				double[] x = new double[4];
+				double[] y = new double[4];
+				for (int i = 0; i < x.length; i++) {
+					x[i] = r.xpoints[i];
+					y[i] = r.ypoints[i];
+				}
+		
+				((ImageDataSource) imgData).setCoords(x, y);
+		}
 
 		if (openedImage.getCanvas() == null) {
 			tryToCatchImageOpenFailure(nrOfOpenImgs);
@@ -660,43 +617,13 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 		// Place the new image sensibly on screen
 		openedImage.getWindow().setLocation(computeOptimalImageLocation());
 
-		// Activate the channels that were open when storing an image
-		if (openedImage.isComposite()) {
-			openedImage.setDisplayMode(IJ.COMPOSITE); // TODO Required?
-			if (imgData.getActChs() == "") {
-				openedImage.setActiveChannels("11111111");
-			} else {
-				openedImage.setActiveChannels(imgData.getActChs());
-			}
-		}
-
-		imgData.setFileDirectory(imgData.getFileDirectory());
-		imgData.setFileName(imgData.getFileName());
+		// TODO Do we need this?
+		// TODO Does this trigger an event?
+//		imgData.setFileDirectory(imgData.getFileDirectory());
+//		imgData.setFileName(imgData.getFileName());
 
 		// Add closing adapter
 		openedImage.getWindow().addWindowListener(new SelectionWindowClosingAdapter());
-	}
-
-	/**
-	 * Composes an {@link ImporterOptions} instance that contains sensible default
-	 * options for opening images with Bio-Formats.
-	 * <p>
-	 * Images are set to be opened as hyperstack. Also, the Bio-Formats upgrade
-	 * check is disabled.
-	 * </p>
-	 * 
-	 * @return An {@link ImporterOptions} instance with default settings
-	 * @throws IOException If there is an issue with opening the default options
-	 *           from file
-	 */
-	private ImporterOptions getDefaultImporterOptions()
-		throws IOException
-	{
-		ImporterOptions options = new ImporterOptions();
-		options.setFirstTime(false);
-		options.setUpgradeCheck(false);
-		options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
-		return options;
 	}
 
 	/**
@@ -710,24 +637,6 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			mainController.getNewOpenSaveFrame().getHeight()
 					+ mainController.getNewOpenSaveFrame().getLocation().y + Constants.guiBorder
 					+ 20);
-	}
-	
-	/**
-	 * TODO Documentation
-	 * 
-	 * @param process
-	 * @return
-	 */
-	private int getHighestSelectedSeriesIndex(ImportProcess process)
-	{
-		int seriesCount = process.getSeriesCount();
-		int highestSelectedSeriesIndex = 0;
-		for (int i = 0; i < seriesCount; i++) {
-			if (process.getOptions().isSeriesOn(i)) {
-				highestSelectedSeriesIndex = i;
-			}
-		}
-		return highestSelectedSeriesIndex;
 	}
 
 	/**
@@ -748,8 +657,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 	 */
 	private void handleImageOpenFailure() {
 		setROIToolOpenable(true);
-		activePanel.getImgData().setFileDirectory("");
-		activePanel.getImgData().setFileName("");
+		activePanel.setImgData(null);
 		IJ.error("failed to open the image.");
 	}
 	
@@ -850,18 +758,26 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 	@Override
 	public void leafSelected(LeafEvent e) {
-		activePanel.getImgData().removeListener(this);
-		
+		DataSource imgData = activePanel.getImgData();
+		if (imgData != null) {
+			activePanel.getImgData().removeListener(this);
+		}
+
 		LeafPanel leafPanel = (LeafPanel) e.getSource();
 		activePanel = leafPanel;
-		activePanel.getImgData().addListener(this);
+
+		imgData = activePanel.getImgData();
+		if (imgData != null) {
+			activePanel.getImgData().addListener(this);
+		}
+
 		showPanelCoordinates();
 
 		// Enable the image opening-related buttons
 		disableAllPanelWindowButtons(false);
 
 		// Update the UI
-		setGUIImageFrameValues(activePanel.getImgData());
+		setGUIImageFrameValues(imgData);
 	}
 
 	@Override
@@ -938,7 +854,7 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 			// Restore state of UI
 			setROIToolOpenable(true);
 			setControlFrameButtonStates(true);
-			
+
 			// Activate the FigureJTool
 			mainController.activateFigureJTool();
 		}
@@ -947,6 +863,10 @@ public class FigureControlPanel extends JFrame implements LeafListener, Separato
 
 	@Override
 	public void imageSelected(ImageSelectionEvent e) {
+		ImagePlus imp = (ImagePlus) e.getSource();
+		ImagePlusDataSource imagePlusDataSource = new ImagePlusDataSource(imp);
+		activePanel.setImgData(imagePlusDataSource);
+
 		// Restore state of UI
 		setROIToolOpenable(true);
 		setControlFrameButtonStates(true);

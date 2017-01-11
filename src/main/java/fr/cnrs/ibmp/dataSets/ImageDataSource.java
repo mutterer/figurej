@@ -2,6 +2,7 @@
 package fr.cnrs.ibmp.dataSets;
 
 import fr.cnrs.ibmp.treeMap.LeafPanel;
+import ij.ImagePlus;
 
 /**
  * TODO Documentation
@@ -9,6 +10,8 @@ import fr.cnrs.ibmp.treeMap.LeafPanel;
  * @author Stefan Helfrich (University of Konstanz)
  */
 public abstract class ImageDataSource extends AbstractDataSource {
+
+	protected ImagePlus imp;
 
 	// position of the selected image in a multi channel or stack like image
 	private int selectedChannel;

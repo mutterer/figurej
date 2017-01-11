@@ -141,15 +141,18 @@ public class LeafPanel extends Panel {
 	private void updateMetadata() {
 		String cal = "1";
 		String unit = "pixel";
-		try {
+
+		if (imgData != null) {
 			cal = "" + imgData.getPixelWidth();
 			unit = "" + imgData.getUnit();
-		} catch (Exception e) {
 		}
-		
+
 		String panelRoi = "" + xPos + "," + yPos + "," + panelWidth + ","
-				+ panelHeight + "," + cal + "," + unit
-				+ "," + imgData.getStringRepresentation();
+				+ panelHeight + "," + cal + "," + unit;
+
+		if (imgData != null) {
+			panelRoi += "," + imgData.getStringRepresentation();
+		}
 
 		ImagePlus imp = WindowManager.getImage((int) Prefs.get("figure.id", 0));
 		if (imp != null) {

@@ -24,7 +24,9 @@ import fr.cnrs.ibmp.OpenFigureEvent;
 import fr.cnrs.ibmp.OpenFigureListener;
 import fr.cnrs.ibmp.SaveFigureEvent;
 import fr.cnrs.ibmp.SaveFigureListener;
+import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.dataSets.FileDataSource;
+import fr.cnrs.ibmp.dataSets.ImagePlusDataSource;
 import fr.cnrs.ibmp.serialize.DefaultSerializer;
 import fr.cnrs.ibmp.serialize.Serializer;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
@@ -340,21 +342,22 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 
 			// store detailed information about the image the user chose for a panel
 			LeafPanel selectedPanel = (LeafPanel) mainWindow.getSelectedPanel();
-			FileDataSource imageData = selectedPanel.getImgData();
-			imageData.setCoords(xValsCopy, yValsCopy);
-			imageData.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
+//			DataSource imageData = selectedPanel.getImgData();
+			ImagePlusDataSource dataSource = new ImagePlusDataSource();
+			dataSource.setCoords(xValsCopy, yValsCopy);
+			dataSource.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
 				selectedImage.getCalibration().getUnit());
-			imageData.setMacro(macro);
-			imageData.setDisplayRange(selectedImage.getDisplayRangeMin(),
+			dataSource.setMacro(macro);
+			dataSource.setDisplayRange(selectedImage.getDisplayRangeMin(),
 				selectedImage.getDisplayRangeMax());
 
 			// position in stack like and composite images
-			imageData.setSlice(selectedImage.getSlice());
-			imageData.setChannel(selectedImage.getChannel());
-			imageData.setFrame(selectedImage.getFrame());
+			dataSource.setSlice(selectedImage.getSlice());
+			dataSource.setChannel(selectedImage.getChannel());
+			dataSource.setFrame(selectedImage.getFrame());
 			WindowManager.setTempCurrentImage(selectedImage);
 
-			imageData.setActChs(activeChannels);
+			dataSource.setActChs(activeChannels);
 
 			float[] xRect = new float[xValsCopy.length];
 			float[] yRect = new float[xValsCopy.length];
@@ -376,10 +379,10 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 			selectedPanel.setPixels((int[]) selectedImage.getProcessor().getPixels());
 			
 			// calculate the calibration
-			imageData.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
+			dataSource.setPixelCalibration(selectedImage.getCalibration().pixelWidth,
 				selectedImage.getCalibration().getUnit());
-			imageData.setAngle(angle);
-			imageData.setScaleFactor(scaleFactor);
+			dataSource.setAngle(angle);
+			dataSource.setScaleFactor(scaleFactor);
 
 			mainWindow.draw();
 			mainWindow.getImagePlus().killRoi();
