@@ -24,6 +24,8 @@ import java.util.Set;
 
 import fr.cnrs.ibmp.windows.MainWindow;
 import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.dataSets.ExternalDataSource;
+import fr.cnrs.ibmp.dataSets.FileDataSource;
 
 /**
  * The {@link DefaultSerializer} handles the process of storing and re-opening panel
@@ -66,13 +68,26 @@ public class DefaultSerializer implements Serializer, Serializable {
 			List<DataSource> list = mainWindow.getDataSources();
 
 			// if folder containing the source images was moved, adapt the file path
+			// TODO Move to FileDataSource
 			for (DataSource d : list) {
-				if (!d.getFileDirectory().equals("") && !d.getFileDirectory().equals(
-					directory)) d.setFileDirectory(directory);
-				if ((d.getFileName() == "") || d.getFileName() == null) d
-					.setFileDirectory("");
-				if ((d.getFileDirectory() == "") || d.getFileDirectory() == null) d
-					.setFileName("");
+				if (d instanceof FileDataSource) {
+					FileDataSource fileDataSource = (FileDataSource) d;
+					if (!fileDataSource.getFileDirectory().equals("") && !fileDataSource
+						.getFileDirectory().equals(directory))
+					{
+						fileDataSource.setFileDirectory(directory);
+					}
+					if ((fileDataSource.getFileName().equals("")) || fileDataSource
+						.getFileName() == null)
+					{
+						fileDataSource.setFileDirectory("");
+					}
+					if ((fileDataSource.getFileDirectory().equals("")) || fileDataSource
+						.getFileDirectory() == null)
+					{
+						fileDataSource.setFileName("");
+					}
+				}
 			}
 
 			mainWindow.recover();
@@ -138,48 +153,50 @@ public class DefaultSerializer implements Serializer, Serializable {
 		saveOverlay(mainW.getImagePlus(), nameOfNewDir);
 
 		List<DataSource> list = mainW.getDataSources();
-		Set<String>	filesFound = new HashSet<String>();
+		Set<String> filesFound = new HashSet<String>();
 
 		// save copies of all source images to this folder
-		for(DataSource dataSource:list)
-		{
-			String beforeSavePath = dataSource.getFileDirectory();
-			if(dataSource.getFileName() != "" && !dataSource.getFileName().isEmpty())
-			{
-				File source = new File(dataSource.getFileDirectory()+dataSource.getFileName());
-				//if there are files with the same name but stored in different directories, one is renamed 
-				//so that both can be stored in the same directory
-				for(String s: filesFound)
-					if(s.endsWith(dataSource.getFileName()) && !s.equals(dataSource.getFileDirectory()+dataSource.getFileName())) {
-						{
-							rename(dataSource);
+		for(DataSource dataSource : list) {
+			if (dataSource instanceof FileDataSource) {
+				FileDataSource fileDataSource = (FileDataSource) dataSource;
+				String beforeSavePath = fileDataSource.getFileDirectory();
+				if(fileDataSource.isValid()) {
+					File source = new File(fileDataSource.getFileDirectory()+fileDataSource.getFileName());
+					//if there are files with the same name but stored in different directories, one is renamed 
+					//so that both can be stored in the same directory
+					// TODO What is happening here?
+					for(String s: filesFound)
+						if(s.endsWith(fileDataSource.getFileName()) && !s.equals(fileDataSource.getFileDirectory()+fileDataSource.getFileName())) {
+							{
+								rename(fileDataSource);
+							}
 						}
+	
+					filesFound.add(fileDataSource.getFileDirectory()+fileDataSource.getFileName());
+	
+					File duplicate = new File(nameOfNewDir+fileDataSource.getFileName());
+					try {
+						copyFile(source, duplicate);
+						fileDataSource.setFileDirectory(nameOfNewDir);
 					}
-
-				filesFound.add(dataSource.getFileDirectory()+dataSource.getFileName());
-
-				File duplicate = new File(nameOfNewDir+dataSource.getFileName());
-				try {
-					copyFile(source, duplicate);
-					dataSource.setFileDirectory(nameOfNewDir);
+					catch (IOException e) {
+						IJ.error("couldn't store "+fileDataSource.getFileName());
+					}
 				}
-				catch (IOException e) {
-					IJ.error("couldn't store "+dataSource.getFileName());
-				}
-			}
-			if(dataSource.getExternalSource() != ""){
+			} else if (dataSource instanceof ExternalDataSource) {
+				ExternalDataSource externalDataSource = (ExternalDataSource) dataSource;
 				//String tempDir = System.getProperty("java.io.tmpdir");
-				File source = new File(beforeSavePath+dataSource.getExternalSource());
-				File duplicate = new File(nameOfNewDir+dataSource.getExternalSource());
-				try {
-					// IJ.log(source.toString());
-					// IJ.log(duplicate.toString());
-					copyFile(source, duplicate);
-					dataSource.setFileDirectory(nameOfNewDir);
-				}
-				catch (IOException e) {
-					IJ.error("couldn't store "+dataSource.getExternalSource());
-				}
+//				File source = new File(beforeSavePath+externalDataSource.getExternalSource());
+//				File duplicate = new File(nameOfNewDir+externalDataSource.getExternalSource());
+//				try {
+//					// IJ.log(source.toString());
+//					// IJ.log(duplicate.toString());
+//					copyFile(source, duplicate);
+//					dataSource.setFileDirectory(nameOfNewDir);
+//				}
+//				catch (IOException e) {
+//					IJ.error("couldn't store "+externalDataSource.getExternalSource());
+//				}
 			}
 
 		}
@@ -188,7 +205,7 @@ public class DefaultSerializer implements Serializer, Serializable {
 		FileOutputStream fos = null;
 		ObjectOutputStream out = null;
 		try {
-			fos = new FileOutputStream(nameOfNewDir+pureFileName+serFileExtension);   
+			fos = new FileOutputStream(nameOfNewDir+pureFileName+serFileExtension);
 			out = new ObjectOutputStream(fos);
 			out.writeObject(mainW);
 			out.close();
@@ -207,14 +224,35 @@ public class DefaultSerializer implements Serializer, Serializable {
 	 * 
 	 * @param d data source which has an image that should be renamed
 	 */
-	private void rename(DataSource d) {
+	private void rename(FileDataSource d) {
 		// TODO What is this doing and why?
 		Random r = new Random();
-		String name = d.getFileName();
-		String ending = name.substring(name.lastIndexOf("."), name.length());
-		name = name.replace(ending, "");
-		//add three random numbers as chars; 48 is the ASCII value of 0 
-		d.setFileName(name+"_"+(char)(r.nextInt(25)+97)+(char)(r.nextInt(10)+48)+(char)(r.nextInt(25)+97)+ending);
+		String fileName = d.getFileName();
+		String cleanedFileName = removeFileExtension(fileName);
+		String fileExtension = getFileExtension(fileName);
+
+		// add three random numbers as chars; 48 is the ASCII value of 0 
+		d.setFileName(cleanedFileName+"_"+(char)(r.nextInt(25)+97)+(char)(r.nextInt(10)+48)+(char)(r.nextInt(25)+97)+fileExtension);
+	}
+
+	/**
+	 * Returns the file extension from a file name.
+	 * 
+	 * @param fileName {@link String} representation of a file name
+	 * @return the file extension extracted from {@code fileName}.
+	 */
+	private String getFileExtension(String fileName) {
+		return fileName.substring(fileName.lastIndexOf("."));
+	}
+
+	/**
+	 * Removes the file extension from a file name.
+	 * 
+	 * @param fileName {@link String} representation of a file name
+	 * @return a file name {@link String} with the file extension removed.
+	 */
+	private String removeFileExtension(final String fileName) {
+		return fileName.substring(0, fileName.lastIndexOf("."));
 	}
 
 	/**
@@ -225,13 +263,15 @@ public class DefaultSerializer implements Serializer, Serializable {
 	 */
 	private void saveOverlay(ImagePlus resultFigure, String dir) {
 		Overlay overlay = resultFigure.getOverlay();
-		if(overlay==null || overlay.size()==0)
+		if(overlay==null || overlay.size()==0) {
 			return;
+		}
 	
 		// FIXME Fails if there were Rois in the RoiManager before
 		RoiManager roiManager = new RoiManager(false);
-		for(int i=0; i<overlay.size(); i++)
+		for(int i=0; i<overlay.size(); i++) {
 			roiManager.addRoi(overlay.get(i));
+		}
 		roiManager.runCommand("Save", dir+roiFileName );
 	}
 
@@ -245,9 +285,10 @@ public class DefaultSerializer implements Serializer, Serializable {
 		String s = mainW.getAllImageNotes();
 		if (s != null) {
 			try {
-				BufferedWriter out = new BufferedWriter(new FileWriter(path +
-					"imageNotes.txt"));
+				FileWriter fileWriter = new FileWriter(path + "imageNotes.txt");
+				BufferedWriter out = new BufferedWriter(fileWriter);
 				out.write(s);
+				out.flush();
 				out.close();
 			}
 			catch (IOException e) {
@@ -269,28 +310,42 @@ public class DefaultSerializer implements Serializer, Serializable {
 	 * @param destFile file the content is copied to
 	 * @throws IOException
 	 */
-	private void copyFile(File sourceFile, File destFile) throws IOException {
-		if(!destFile.exists()) {
+	public static void copyFile(File sourceFile, File destFile)
+		throws IOException
+	{
+		if (!destFile.exists()) {
 			destFile.createNewFile();
 		}
-		else 
-			return;
-
+		FileInputStream fIn = null;
+		FileOutputStream fOut = null;
 		FileChannel source = null;
 		FileChannel destination = null;
-
 		try {
-			source = new FileInputStream(sourceFile).getChannel();
-			destination = new FileOutputStream(destFile).getChannel();
-			destination.transferFrom(source, 0, source.size());
+			fIn = new FileInputStream(sourceFile);
+			source = fIn.getChannel();
+			fOut = new FileOutputStream(destFile);
+			destination = fOut.getChannel();
+			long transfered = 0;
+			long bytes = source.size();
+			while (transfered < bytes) {
+				transfered += destination.transferFrom(source, 0, source.size());
+				destination.position(transfered);
+			}
 		}
 		finally {
-			if(source != null) {
+			if (source != null) {
 				source.close();
 			}
-			if(destination != null) {
+			else if (fIn != null) {
+				fIn.close();
+			}
+			if (destination != null) {
 				destination.close();
+			}
+			else if (fOut != null) {
+				fOut.close();
 			}
 		}
 	}
+
 }
