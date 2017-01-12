@@ -14,13 +14,9 @@ import ij.plugin.PlugIn;
  */
 public class PreferencesDialog implements PlugIn {
 
-	private GenericDialog gd;
-
-	/**
-	 * Constructs a {@link PreferencesDialog}.
-	 */
-	protected PreferencesDialog() {
-		gd = new GenericDialog("FigureJ Preferences");
+	@Override
+	public void run(String arg) {
+		GenericDialog gd = new GenericDialog("FigureJ Preferences");
 		gd.addCheckbox("Enable External tools", Prefs.get("figurej.externalTools",
 			false));
 		gd.addStringField("Path to USCF Chimera", Prefs.get("figurej.chimeraPath",
@@ -29,10 +25,7 @@ public class PreferencesDialog implements PlugIn {
 			"not set"), 60);
 		gd.addCheckbox("Allow Slicing Panels by Dragging the Mouse", Prefs.get(
 			"figurej.mousePanelSlicing", false));
-	}
 
-	@Override
-	public void run(String arg) {
 		gd.showDialog();
 
 		if (!gd.wasCanceled()) {
