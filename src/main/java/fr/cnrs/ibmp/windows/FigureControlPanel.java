@@ -133,8 +133,9 @@ public class FigureControlPanel extends JFrame implements LeafListener,
 		this.add(cellInit(), BorderLayout.NORTH);
 		this.add(imageInit(), BorderLayout.CENTER);
 
-		if (Prefs.get("figurej.externalTools", 0) == 1)
+		if (Prefs.get("figurej.externalTools", false)) {
 			this.add(new PluginPanel(mainController), BorderLayout.SOUTH);
+		}
 
 		this.setBackground(Constants.backgroundColor);
 		this.pack();

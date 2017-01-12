@@ -1,11 +1,5 @@
 package fr.cnrs.ibmp.plugIns;
 
-import ij.IJ;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-import ij.gui.Roi;
-
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Point;
@@ -15,29 +9,38 @@ import java.io.File;
 
 import javax.swing.JButton;
 
+import fr.cnrs.ibmp.dataSets.ExternalDataSource;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.windows.MainWindow;
+import ij.IJ;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
+import ij.gui.Roi;
 
 /**
+ * This class controls communication with Inkscape.
+ * 
  * @author Jerome Mutterer
- * @author Edda Zinck this class controls communication with Inkscape
+ * @author Edda Zinck 
  */
-
-public class Inkscape_Link extends Link implements ActionListener {
+public class Inkscape_Link extends Link {
 
 	public static final String LOC_KEY = "inkscape.loc";
 	private static final long serialVersionUID = 1L;
 	private static String tempDir = IJ.getDirectory("startup") + "temp"
 			+ File.separator;
 	private static Frame instance;
-	private JButton createISPanelButton = new JButton("Create svg panel");
+	private JButton createISPanelButton = new JButton("Create SVG panel");
 	private JButton grabButton = new JButton("Grab view");
 	private JButton editButton = new JButton("Edit svg");
 	private JButton helpButton = new JButton("Help");
 
-	// TODO modifiers?!
 	String[] portSettings = new String[3];
 
+	/**
+	 * Creates an {@link Inkscape_Link} with default settings.
+	 */
 	public Inkscape_Link() {
 		super();
 		init();
@@ -49,7 +52,7 @@ public class Inkscape_Link extends Link implements ActionListener {
 	}
 
 	private void init() {
-		linkIdentifyer = "Inkscape_";
+		linkIdentifier = "Inkscape_";
 		// fileName = linkIdentifyer+counter+extension;
 		if (instance != null) {
 			WindowManager.toFront(instance);
@@ -73,6 +76,7 @@ public class Inkscape_Link extends Link implements ActionListener {
 		} else {
 			GUI.center(this);
 		}
+
 		setVisible(true);
 	}
 
@@ -80,6 +84,7 @@ public class Inkscape_Link extends Link implements ActionListener {
 		createISPanelButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
+				// TODO This should be unnecessary if Link listens to LeafSelected events
 				updateActivePanel();
 				int width = 100;
 				int height = 100;
@@ -89,16 +94,23 @@ public class Inkscape_Link extends Link implements ActionListener {
 					width = IJ.getImage().getRoi().getBounds().width;
 					height = IJ.getImage().getRoi().getBounds().height;
 				}
-				String svg = getTextFromJar("/imgs/empty.svg");
+
+				String svg = getTextFromJar("imgs/empty.svg");
 				svg = svg.replaceAll("##WIDTH##", IJ.d2s(width, 0));
 				svg = svg.replaceAll("##HEIGHT##", IJ.d2s(height, 0));
-				fileName = linkIdentifyer+timeStamp()+".svg";
-				createFile (tempDir+fileName,svg);
-				((LeafPanel) getActivePanel()).getImgData().setExternalSource(fileName);
-				((LeafPanel) getActivePanel()).getImgData().setFileDirectory(tempDir);
+				fileName = linkIdentifier+timeStamp()+".svg";
+				writeToFile(tempDir+fileName,svg);
+				if (getActivePanel() instanceof LeafPanel) {
+					ExternalDataSource externalDataSource = new ExternalDataSource();
+					externalDataSource.setExternalSource(fileName);
+					externalDataSource.setFileDirectory(tempDir);
+
+					LeafPanel activePanel = (LeafPanel) getActivePanel();
+					activePanel.setImgData(externalDataSource);
+				}
+
 				String script = "open;"+tempDir+fileName;
 				inkscapeNotify(script);
-
 			}
 		});
 
@@ -106,30 +118,51 @@ public class Inkscape_Link extends Link implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				updateActivePanel(); 
-				fileName = ((LeafPanel) getActivePanel()).getImgData().getExternalSource(); 
-				tempDir = ((LeafPanel) getActivePanel()).getImgData().getFileDirectory(); 
-				String script = "grab;"+tempDir+fileName;
-				inkscapeNotify(script);
-				fileName = fileName.replaceAll(".svg", ".png");
-				((LeafPanel) getActivePanel()).getImgData().setFileName(fileName); 
-				store(tempDir,fileName);
+				
+				if (getActivePanel() instanceof LeafPanel) {
+					LeafPanel activePanel = (LeafPanel) getActivePanel();
 
+					if (activePanel.getImgData() instanceof ExternalDataSource) {
+						ExternalDataSource externalDataSource = (ExternalDataSource) activePanel.getImgData();
+
+						fileName = externalDataSource.getExternalSource();
+						tempDir = externalDataSource.getFileDirectory();
+
+						// Execute script to generate a PNG version of the source image
+						String script = "grab;"+tempDir+fileName;
+						inkscapeNotify(script);
+
+						String svgFileName = fileName.replaceAll(".svg", ".png");
+						externalDataSource.setFileName(svgFileName); 
+						store(tempDir, svgFileName);
+					} else {
+						// TODO Ask user if (s)he really wants to replace the DataSource
+					}
+				}
 			}
 		});
+
 		editButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				updateActivePanel(); 
-				fileName = ((LeafPanel) getActivePanel()).getImgData().getExternalSource(); 
-				tempDir = ((LeafPanel) getActivePanel()).getImgData().getFileDirectory(); 
-				String script = "open;"+tempDir+fileName;
-				inkscapeNotify(script);
+				
+				if (getActivePanel() instanceof LeafPanel) {
+					LeafPanel activePanel = (LeafPanel) getActivePanel();
 
+					if (activePanel.getImgData() instanceof ExternalDataSource) {
+						ExternalDataSource externalDataSource = (ExternalDataSource) activePanel.getImgData();
+
+						fileName = externalDataSource.getExternalSource(); 
+						tempDir = externalDataSource.getFileDirectory(); 
+						String script = "open;"+tempDir+fileName;
+						inkscapeNotify(script);
+					}
+				}
 			}
 		});
 
 		helpButton.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				IJ.showMessage(
@@ -140,10 +173,6 @@ public class Inkscape_Link extends Link implements ActionListener {
 								+ "Inkscape should be installed and configured in FigureJ preferences.");
 			}
 		});
-	}
-
-	public void actionPerformed(ActionEvent evt) {
-		// moved each case into buttons action listeners.
 	}
 
 	void inkscapeNotify(String script) {
