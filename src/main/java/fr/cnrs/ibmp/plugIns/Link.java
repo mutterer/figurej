@@ -37,7 +37,7 @@ import fr.cnrs.ibmp.dataSets.ExternalDataSource;
  * @author Jerome Mutterer
  * @author Edda Zinck
  */
-public abstract class Link extends JFrame implements LinkInterface {
+public abstract class Link extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private static final String s = "Linking to external software";
