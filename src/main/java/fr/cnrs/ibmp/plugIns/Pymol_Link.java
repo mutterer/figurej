@@ -1,37 +1,39 @@
 package fr.cnrs.ibmp.plugIns;
 
-import ij.IJ;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-
-import java.awt.Button;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.JButton;
 
+import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
 import fr.cnrs.ibmp.windows.MainWindow;
+import ij.IJ;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
 
 /**
+ * Controls a PyMOL server instance and allows to create an image that is used
+ * to fill the active panel with PyMOL visualizations.
+ * 
  * @author Jerome Mutterer
  * @author Edda Zinck
- * this class controls a PyMOL server instance and allows to create an image that is
- * used to fill the active panel with PyMOL visualizations.
  */
+public class Pymol_Link extends Link {
 
-public class Pymol_Link extends Link implements ActionListener {
-
-	public static final String LOC_KEY 			= "pymollink.loc";
-	private static final long serialVersionUID 	= 1L;
-	private static String tempDir 				=  System.getProperty("java.io.tmpdir");
+	public static final String LOC_KEY = "pymollink.loc";
+	private static final long serialVersionUID = 1L;
+	private static String tempDir =  System.getProperty("java.io.tmpdir");
+	
+	// UI related fields
 	private static Frame instance;
 	private JButton viewPButton = new JButton("Format viewport");
 	private JButton rayTButton 	= new JButton("Raytrace view");
@@ -40,23 +42,32 @@ public class Pymol_Link extends Link implements ActionListener {
 
 	//TODO modifiers?!
 	String jeditUserPrefs; 
-	String[] portSettings 		= new String[3];
+	String[] portSettings = new String[3];
 
-
-
+	/**
+	 * Creates a {@link Pymol_Link} with default settings.
+	 */
 	public Pymol_Link() {
 		super();
 		init();
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param main
+	 */
 	public Pymol_Link(MainWindow main) {
 		super(main);
 		init();
 	}
 
+	/**
+	 * TODO Documentation
+	 */
 	private void init() {
-		linkIdentifyer = "figureJ_PymolIMG";
-		fileName = linkIdentifyer+counter+extension;
+		linkIdentifier = "figureJ_PymolIMG";
+		fileName = linkIdentifier+counter+extension;
 		if (instance != null) {
 			WindowManager.toFront(instance);
 			return;
@@ -82,30 +93,48 @@ public class Pymol_Link extends Link implements ActionListener {
 		}
 		setVisible(true);
 	}
+
+	/**
+	 * TODO Documentation
+	 */
 	private void addListeners(){
 		viewPButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				String script = "";
-				script = "viewport " + IJ.runMacro("getSelectionBounds(x,y,w,h); return ''+w+','+h");
+				updateActivePanel();
+
+				double boundsWidth = IJ.getImage().getRoi().getBounds().getWidth();
+				double boundsHeight = IJ.getImage().getRoi().getBounds().getHeight();
+
+				String script = String.format("viewport %.0f,%.0f", boundsWidth, boundsHeight);
 				pymolNotify(script);
-				IJ.runMacro("getSelectionBounds(x,y,w,h);call('ij.Prefs.set','selectedPanel.w',w);call('ij.Prefs.set','selectedPanel.h',h);");
+
+				Prefs.set("selectedPanel.w", boundsWidth);
+				Prefs.set("selectedPanel.h", boundsHeight);
 			}
 		});
 
 		rayTButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				String script = "";
-				script = "ray " + IJ.runMacro("getSelectionBounds(x,y,w,h); return ''+w+','+h");
+				updateActivePanel();
+
+				double boundsWidth = IJ.getImage().getRoi().getBounds().getWidth();
+				double boundsHeight = IJ.getImage().getRoi().getBounds().getHeight();
+
+				String script = String.format("ray %.0f,%.0f", boundsWidth, boundsHeight);
 				pymolNotify(script);
-				IJ.runMacro("getSelectionBounds(x,y,w,h);call('ij.Prefs.set','selectedPanel.w',w);call('ij.Prefs.set','selectedPanel.h',h);");
+
+				Prefs.set("selectedPanel.w", boundsWidth);
+				Prefs.set("selectedPanel.h", boundsHeight);
 			}
 		});
 
 		grabButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				updateActivePanel();
+
 				checkFileName(tempDir);
 				String script = "png " + tempDir + fileName;
 				IJ.showStatus(script);
@@ -113,12 +142,13 @@ public class Pymol_Link extends Link implements ActionListener {
 				pymolNotify(script);
 				IJ.wait(1000); 
 
+				// TODO What does this macro do?
+				// IJ.runMacro("id=getImageID;setBatchMode(1);open('" + tempDir + fileName + "');run('Copy');selectImage(id);run('Paste');");
 				store(tempDir, fileName);
 			}
 		});
 
 		helpButton.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				IJ.showMessage("-> start PyMOL in server mode and display your content.\n"+
@@ -135,40 +165,31 @@ public class Pymol_Link extends Link implements ActionListener {
 		});
 	}
 
-	public void actionPerformed(ActionEvent evt) {
-		String script = "";
-		Button b = (Button) evt.getSource();
-		if (b.getName() == "Format viewport") {
-			updateActivePanel();
-			script = "viewport " + IJ.runMacro("getSelectionBounds(x,y,w,h); return ''+w+','+h");
-			pymolNotify(script);
-		} else if (b.getName() == "Raytrace view") {
-			script = "ray " + IJ.runMacro("getSelectionBounds(x,y,w,h); return ''+w+','+h");
-			pymolNotify(script);
-		} else if (b.getName() == "Grab view") {
-			script = "png " + tempDir + fileName;
-			IJ.showStatus(script);
-
-			pymolNotify(script);
-			IJ.wait(1000); 
-			IJ.runMacro("id=getImageID;setBatchMode(1);open('" + tempDir + fileName + "');run('Copy');selectImage(id);run('Paste');");
-			store(tempDir,fileName);
-
-		}
-	}
-
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param script
+	 */
 	void pymolNotify(String script) {
-		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 		try {
+			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 			config.setServerURL(new URL("http://localhost:9123/RPC2"));
 			XmlRpcClient client = new XmlRpcClient();
 			client.setConfig(config);
-			Object[] params = new Object[] {script};
+			Object[] params = new Object[]{script};
 			client.execute("do", params);
-		} catch (Exception e) {
-			IJ.log("PyMol link error. Restart PyMol in server mode"); }
+		}
+		catch (MalformedURLException exc) {
+			// NB: hard-coded URL
+		}
+		catch (XmlRpcException exc) {
+			IJ.log("PyMol link error. Restart PyMol in server mode");
+		}
 	}
 
+	/**
+	 * TODO Documentation
+	 */
 	public void close() {
 	//	super.close();
 		instance = null;
