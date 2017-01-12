@@ -1,3 +1,4 @@
+
 package fr.cnrs.ibmp.plugIns;
 
 import ij.IJ;
@@ -15,21 +16,25 @@ import java.io.File;
 
 import javax.swing.JButton;
 
+import fr.cnrs.ibmp.dataSets.ExternalDataSource;
+import fr.cnrs.ibmp.treeMap.LeafPanel;
 import fr.cnrs.ibmp.windows.MainWindow;
 
 /**
- * Generic FigureJ link mechanism
- * designed for ICY, but will work with any software. 
+ * Generic FigureJ link mechanism.
+ * <p>
+ * Originally designed for ICY, but will work with any software.
+ * </p>
+ * 
  * @author Jerome Mutterer
- * @author Edda Zinck this class controls communication with Inkscape
+ * @author Edda Zinck
  */
-
-public class Generic_Link extends Link implements ActionListener {
+public class Generic_Link extends Link {
 
 	public static final String LOC_KEY = "genericLink.loc";
 	private static final long serialVersionUID = 1L;
-	private static String tempDir = IJ.getDirectory("startup") + "temp"
-			+ File.separator;
+	private static String tempDir = IJ.getDirectory("startup") + "temp" +
+		File.separator;
 	private static Frame instance;
 	private JButton exposePanelButton = new JButton("Expose Panel");
 	private JButton grabButton = new JButton("Grab view");
@@ -39,18 +44,26 @@ public class Generic_Link extends Link implements ActionListener {
 	// TODO modifiers?!
 	String[] portSettings = new String[3];
 
+	/**
+	 * TODO Documentation
+	 */
 	public Generic_Link() {
 		super();
 		init();
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param main
+	 */
 	public Generic_Link(MainWindow main) {
 		super(main);
 		init();
 	}
 
 	private void init() {
-		linkIdentifyer = "Generic_";
+		linkIdentifier = "Generic_";
 		// fileName = linkIdentifyer+counter+extension;
 		if (instance != null) {
 			WindowManager.toFront(instance);
@@ -69,7 +82,8 @@ public class Generic_Link extends Link implements ActionListener {
 		Point loc = Prefs.getLocation(LOC_KEY);
 		if (loc != null) {
 			setLocation(loc);
-		} else {
+		}
+		else {
 			GUI.center(this);
 		}
 		setVisible(true);
@@ -87,16 +101,22 @@ public class Generic_Link extends Link implements ActionListener {
 					width = IJ.getImage().getRoi().getBounds().width;
 					height = IJ.getImage().getRoi().getBounds().height;
 				}
-				fileName = linkIdentifyer+timeStamp()+".tif";
+				fileName = linkIdentifier + timeStamp() + ".tif";
 				// Write in preferences here, and save prefs.
 				Prefs.set("figurej.panelWidth", width);
 				Prefs.set("figurej.panelHeight", height);
 				Prefs.set("figurej.tempDir", tempDir);
 				Prefs.set("figurej.panelFilename", fileName);
 				Prefs.savePreferences();
-//				((LeafPanel) getActivePanel()).getImgData().setExternalSource(fileName);
-//				((LeafPanel) getActivePanel()).getImgData().setFileDirectory(tempDir);
 
+				if (getActivePanel() instanceof LeafPanel) {
+					ExternalDataSource externalDataSource = new ExternalDataSource();
+					externalDataSource.setExternalSource(fileName);
+					externalDataSource.setFileDirectory(tempDir);
+
+					LeafPanel activePanel = (LeafPanel) getActivePanel();
+					activePanel.setImgData(externalDataSource);
+				}
 			}
 		});
 
@@ -106,16 +126,12 @@ public class Generic_Link extends Link implements ActionListener {
 				updateActivePanel();
 				// Read from preferences here.
 				tempDir = Prefs.get("figurej.tempDir", "");
-				fileName= Prefs.get("figurej.panelFilename", "");
+				fileName = Prefs.get("figurej.panelFilename", "");
 				// IJ.log(tempDir+fileName);
-				store(tempDir,fileName);
+				store(tempDir, fileName);
 			}
 		});
 
-	}
-
-	public void actionPerformed(ActionEvent evt) {
-		// moved each case into buttons action listeners.
 	}
 
 	public void close() {
