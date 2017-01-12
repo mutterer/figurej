@@ -112,6 +112,7 @@ public abstract class Link extends JFrame implements LinkInterface {
 	 */
 	protected void checkFileName(String tempDir) {
 		if (leafPanel != null) {
+			// TODO Fix if DataSource is null
 			if (!dataSource.getFileDirectory().equals(tempDir)) {
 				updateFileName(linkIdentifier, extension);
 				return;
