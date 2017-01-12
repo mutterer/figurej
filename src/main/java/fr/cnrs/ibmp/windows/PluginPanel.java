@@ -20,9 +20,9 @@ import fr.cnrs.ibmp.plugIns.Link;
 
 /**
  * TODO Documentation
- * 
+ * <p>
  * (c) IBMP-CNRS
- * 
+ * </p>
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
@@ -30,7 +30,7 @@ public class PluginPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	// private JButton pyMolButton = new JButton("PyMOL");
-	// private JButton excelButton = new JButton("Excel");
+//	private JButton excelButton = new JButton("Excel");
 //	private JButton genericButton = new JButton("Generic");
 //	private JButton rButton = new JButton("R");
 //	private JButton chimeraButton = new JButton("Chimera");
@@ -38,6 +38,7 @@ public class PluginPanel extends JPanel {
 //	private JButton scriptButton = new JButton("Script");
 
 	private Link generic, r, chimera, inkscape, script;
+//	private Link excel;
 
 	public PluginPanel(final MainController mainController) {
 		this.setLayout(new GridLayout(3, 2));
@@ -48,7 +49,7 @@ public class PluginPanel extends JPanel {
 		this.add(inkscapeButton);
 //		this.add(rButton);
 		//TODO: re-enable when export from excel works.
-		// this.add(excelButton);
+//		this.add(excelButton);
 		this.setBorder(BorderFactory.createTitledBorder("External Tools"));
 
 		addListeners(mainController.getMainWindow());
@@ -97,9 +98,9 @@ public class PluginPanel extends JPanel {
 //		excelButton.addActionListener(new ActionListener() {
 //			@Override
 //			public void actionPerformed(ActionEvent arg0) {
-//				if(e==null)
-//					e = new Excel_Link(w);
-//				e.setVisible(true);	
+//				if(excel==null)
+//					excel = new Excel_Link(w);
+//				excel.setVisible(true);	
 //			}
 //		});
 

@@ -1,11 +1,5 @@
 package fr.cnrs.ibmp.plugIns;
 
-import ij.IJ;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-
-import java.awt.Button;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Point;
@@ -13,15 +7,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import javax.swing.JButton;
+
 import fr.cnrs.ibmp.windows.MainWindow;
+import ij.IJ;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
 
 /**
+ * This class prepares a clip board message that an excel macro can use to
+ * output a selected diagram as image. the image can be linked and copied 
+ * by this class to the active panel.
+ * 
  * @author Jerome Mutterer
  * @author Edda Zinck
- * 
- * this class prepares a clip board message that an excel macro can use to
- * output a selected diagram as image. the image can be linked and copied 
- * by this class to the active panel */
+ */
 
 /* keep in mind that you need FULL PATHS in VBA (excel macro language)
 for Mac this means: paths have to start with 'MacHD'. 
@@ -64,32 +65,44 @@ Sub FigureJMacro2()
 End If
 End Sub
  */
-public class Excel_Link extends Link implements ActionListener {
+public class Excel_Link extends Link {
 
-	private static final long 	serialVersionUID 	= 1L;
-	private static String 		tempDir 			= System.getProperty("user.home");
-	private final String 		excelSplitIndicator = "||";
-	private static Frame 		instance;
+	private static final long serialVersionUID = 1L;
+	private static String tempDir = System.getProperty("user.home");
+	private final String excelSplitIndicator = "||";
+	private static Frame instance;
 
 	public static final String LOC_KEY = "xlsclipboardlink.loc";		//TODO check if public necessary
 
+	private JButton generateExcelCommandButton = new JButton("Generate Excel command");
+	private JButton grabButton = new JButton("Grab view");
+	private JButton helpButton = new JButton("Help");
+
+	/**
+	 * TODO Documentation
+	 */
 	public Excel_Link() {
 		super();
 		init();
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param main
+	 */
 	public Excel_Link(MainWindow main) {
 		super(main);
 		init();
 	}
 
 	private void init() {
-		linkIdentifyer = "FigureJ_ExcelChartIMG";
+		linkIdentifier = "FigureJ_ExcelChartIMG";
 
 		if(! tempDir.endsWith(File.separator))
 			tempDir += File.separator;
 
-		fileName = linkIdentifyer+counter+extension;
+		fileName = linkIdentifier+counter+extension;
 		if (instance != null) {
 			WindowManager.toFront(instance);
 			return;
@@ -99,9 +112,10 @@ public class Excel_Link extends Link implements ActionListener {
 		setLayout(new FlowLayout());
 		setTitle("Excel Link");
 
-		addButton("Generate Excel command");
-		addButton("Grab view");
-		addButton("Help");
+		addListeners();
+		add(generateExcelCommandButton);
+		add(grabButton);
+		add(helpButton);
 
 		pack();
 		Point loc = Prefs.getLocation(LOC_KEY);
@@ -113,54 +127,61 @@ public class Excel_Link extends Link implements ActionListener {
 		setVisible(true);
 	}
 
-	public void actionPerformed(ActionEvent evt) {
-		String script = "";
-		Button b = (Button) evt.getSource();
-		if (b.getName() == "Generate Excel command") {
-			updateActivePanel();
-			checkFileName(tempDir);
-			script = "String.copy('figureJ"+IJ.runMacro("getSelectionBounds(x,y,w,h); return '"+excelSplitIndicator+"'+w+'"+excelSplitIndicator+"'+h") 
-					+excelSplitIndicator;
-			if (IJ.isMacOSX()) {
-				script += fileName+excelSplitIndicator+"');"; 
-			} else if (IJ.isWindows()) {
-				script += fileName+excelSplitIndicator+"');"; 
-				// script += tempDir.replace(File.separatorChar, ':')+fileName+excelSplitIndicator+"');";
-				// TODO find out if copying to the temp folder would work at least here
-			}
-			else {
-				IJ.showMessage("the excel link only works under MacOSX and XWindows");
-				return;
-			}
+	/**
+	 * TODO Documentation
+	 */
+	private void addListeners() {
+		generateExcelCommandButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String script = "";
+				updateActivePanel();
+				checkFileName(tempDir);
+				script = "String.copy('figureJ"+IJ.runMacro("getSelectionBounds(x,y,w,h); return '"+excelSplitIndicator+"'+w+'"+excelSplitIndicator+"'+h") 
+						+excelSplitIndicator;
+				if (IJ.isMacOSX()) {
+					script += fileName+excelSplitIndicator+"');"; 
+				} else if (IJ.isWindows()) {
+					script += fileName+excelSplitIndicator+"');"; 
+					// script += tempDir.replace(File.separatorChar, ':')+fileName+excelSplitIndicator+"');";
+					// TODO find out if copying to the temp folder would work at least here
+				}
+				else {
+					IJ.showMessage("Excel_Link only supported on MacOSX and Windows");
+					return;
+				}
 
-			IJ.runMacro(script);
-			IJ.runMacro("getSelectionBounds(x,y,w,h);call('ij.Prefs.set','selectedPanel.w',w);call('ij.Prefs.set','selectedPanel.h',h);");
-			IJ.showStatus("Excel message created");
+				IJ.runMacro(script);
+				IJ.runMacro("getSelectionBounds(x,y,w,h);call('ij.Prefs.set','selectedPanel.w',w);call('ij.Prefs.set','selectedPanel.h',h);");
+				IJ.showStatus("Excel message created");
+			}
+		});
 
-		} else if (b.getName() == "Grab view") {
-			store(tempDir,fileName);
-		}
-		else if (b.getName().equals("Help"))
-		{
-			IJ.showMessage("-> hit the 'generate Excel command' button. \n"+
-					"-> switch to excel,  open your file and select your chart (click on its margin).\n" +
-					"-> run the macro distributed with FigureJ: tools -> macro -> macros -> FigureJ macro -> run\n"+
-					"-> go back to FigureJ and hit the 'Grab View' button. This should display your chart.");
-		}
+		grabButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				store(tempDir,fileName);
+			}
+		});
+
+		helpButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				IJ.showMessage("-> hit the 'generate Excel command' button. \n"+
+						"-> switch to excel,  open your file and select your chart (click on its margin).\n" +
+						"-> run the macro distributed with FigureJ: tools -> macro -> macros -> FigureJ macro -> run\n"+
+						"-> go back to FigureJ and hit the 'Grab View' button. This should display your chart.");
+			}
+		});
 	}
 
-	void addButton(String label) {
-		Button button = new Button(label);
-		button.addActionListener(this);
-		button.setName(label);
-		add(button);
-	}
+	/**
+	 * TODO Documentation
+	 */
 	public void close() {
 		//super.close();
 		instance = null;
 		Prefs.saveLocation(LOC_KEY, getLocation());
 	}
 
-
 }
-
