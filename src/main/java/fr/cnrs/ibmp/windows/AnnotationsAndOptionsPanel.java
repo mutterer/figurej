@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
@@ -47,14 +46,20 @@ import ij.gui.TextRoi;
 import ij.gui.Toolbar;
 
 /**
- * window opened by the options button of the panel window
+ * A window that lets the user
+ * <ul>
+ * <li>add labels,</li>
+ * <li>add scalebars, and</li>
+ * <li>add annotations.</li>
+ * </ul>
  * 
  * @author Jerome Mutter
  * @author Edda Zink
- * @author Stefan Helfrich
+ * @author Stefan Helfrich (University of Konstanz)
  */
 public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
+	// TODO Are we even serializing this class?
 	private static final long serialVersionUID = 1L;
 
 	//options
@@ -75,19 +80,21 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	private JButton hideOverlayButton;
 	private JButton showOverlayButton;
 
-	/** Currently selected (active) LeafPanel */
+	/** Currently selected (thus "active") LeafPanel. */
 	private LeafPanel activePanel;
 
-	/** TODO Documentation */
+	/** A {@link MainWindow} with the current state of the figure. */
 	private MainWindow mainWindow;
 
-	/** TODO Documentation */
-	private LabelDrawer labelDrawer;
+	/** A {@link LabelDrawer} that is used for drawing labels on individual panels. */
+	private LabelDrawer labelDrawer = new UppercaseLabelDrawer();
 
 	private JPanel optionsPanel = new JPanel();
+
 	// text labels
 	private JTextField userDefinedLabelsInputField = new JTextField();
 	private JLabel userDefinedLabelsMessage = new JLabel("  own labels:");
+
 	// arrow 8599 plus superscript 8314
 	// private JButton fontSpecButton = new JButton("fonts"+new
 	// Character((char) 8230));
@@ -95,6 +102,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	private JTextField yLabelOffset = new JTextField("10");
 	private JComboBox labelPositionSelector = new JComboBox();
 	private JComboBox labelTypeSelector = new JComboBox();
+
 	// scale bars
 	private JTextField xOffsScales = new JTextField("20");
 	private JTextField yOffsScales = new JTextField("20");
@@ -109,15 +117,21 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	private int[] a = { 1, 2, 5 };
 	private double[] b = { 0.001, 0.01, 0.1, 1, 10, 100, 1000 };
 
+	/**
+	 * Creates an instance at a specified location.
+	 * 
+	 * @param xLocation x coordinate of top left corner
+	 * @param yLocation y coordinate of top left corner
+	 */
 	public AnnotationsAndOptionsPanel(int xLocation, int yLocation) {
-
 		this.setLocation(xLocation, yLocation);
 		this.setTitle("Options");
 
 		initButtons();
-		initLabelGUI();
 		initScalebarGUI();
+		initLabelGUI();
 		addOptionsWindowToolTips();
+		initTooltips();
 
 		// labels layout
 		JPanel labelsPanel = new JPanel(new GridLayout(3, 2));
@@ -268,6 +282,9 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 		});
 	}
 
+	/**
+	 * TODO Documentation
+	 */
 	private void initScalebarGUI() {
 		scalebarSizeSlider.addChangeListener(new ChangeListener() {
 			@Override
@@ -288,6 +305,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 				scaleTextValue.setText(activePanel.getShortScaleBarText());
 			}
 		});
+
 		scaleDisplayCheck.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -313,9 +331,9 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 							* activePanel.getImgData().getPixelWidth(), 2)
 							+ " " + activePanel.getImgData().getUnit());
 				}
-
 			}
 		});
+
 		scaleTextDisplayCheck.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -330,9 +348,9 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 							.getSize()));
 					mainWindow.draw();
 				}
-
 			}
 		});
+
 		lockScale.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -343,13 +361,10 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 					Prefs.set("figurej.lockedPixelSize", pixelWidth);
 					lockScale
 							.setText("<html>Lock Pixel size: <font color=red>LOCKED</font></html>");
-
 				} else {
 					Prefs.set("figurej.lockPixelSize", false);
 					lockScale.setText("<html>Lock Pixel size</html>");
-
 				}
-
 			}
 		});
 	}
@@ -361,6 +376,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	 * @param backwards
 	 */
 	public void addPanelLabel(boolean reset, boolean backwards) {
+		// TODO Move to controller
 		if (labelTypeSelector.getSelectedItem().toString().equals(
 			LabelType.userDefined.toString()))
 		{
@@ -387,9 +403,9 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	 * Disables and hides text field for entering a sequence of custom labels.
 	 */
 	private void disableUserDefinedLabelsInputField() {
-			userDefinedLabelsMessage.setEnabled(false);
-			userDefinedLabelsInputField.setVisible(false);
-			userDefinedLabelsInputField.setToolTipText(null);
+		userDefinedLabelsMessage.setEnabled(false);
+		userDefinedLabelsInputField.setVisible(false);
+		userDefinedLabelsInputField.setToolTipText(null);
 	}
 
 	/**
@@ -398,11 +414,15 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 	private void enableUserDefinedLabelsInputField() {
 		userDefinedLabelsMessage.setEnabled(true);
 		userDefinedLabelsInputField.setVisible(true);
-		userDefinedLabelsInputField
-				.setToolTipText("insert your own labels, separate by semicolon");
+		userDefinedLabelsInputField.setToolTipText(
+			"insert your own labels, separated by semicolon");
 	}
 
-	/** find good value depending on slider position */
+	/**
+	 * Find good value for scale bar length depending on slider position.
+	 * 
+	 * TODO Can we improve that implementation? It feels odd to me.
+	 */
 	private double getClosestScaleBar() {
 		double dist = 1000000;
 		double[] c = new double[2];
@@ -417,11 +437,13 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 					dist = currentdist;
 				}
 			}
-		return (double) ((c[0] * c[1]) / activePanel.getImgData()
-				.getPixelWidth());
+		return (c[0] * c[1]) / activePanel.getImgData().getPixelWidth();
 	}
 
-	/** set info messages that pop up if mouse stays longer over a component */
+	/**
+	 * Set info messages that pop up if mouse stays longer over a component
+	 * (tooltips).
+	 */
 	private void addOptionsWindowToolTips() {
 		drawLabelButton.setToolTipText("add text label to panel");
 		removeLabelButton.setToolTipText("delete text label from panel");
@@ -432,8 +454,8 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 		xOffsScales.setToolTipText("distance to right panel border");
 		yOffsScales.setToolTipText("distance to lower panel border");
 		scalebarHeight.setToolTipText("scalebar height");
-		changeSeparatorColorButton
-				.setToolTipText("Update separators color to current foreground color");
+		changeSeparatorColorButton.setToolTipText(
+			"Update separators color to current foreground color");
 	}
 
 	/**
@@ -454,10 +476,13 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 			if (i < 0 || i > max)
 				i = 10;
 		}
-		;
+
 		return i;
 	}
 
+	/**
+	 * TODO Documentation
+	 */
 	private void initButtons() {
 	// moved to options dialog
 			adoptPixelsButton = new JButton("adopt current panel pixels");
@@ -466,6 +491,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 				// store them
 				// is useful if somebody draws with non figureJ tools on the
 				// result window and wants to store these changes
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					if (activePanel != null)
 						activePanel.setPixels(mainWindow.getImagePlus());
@@ -474,6 +500,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			changeSeparatorColorButton = new JButton("update separator color");
 			changeSeparatorColorButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					int newColor = Toolbar.getForegroundColor().getRGB();
 					SeparatorPanel.setColor(newColor);
@@ -483,6 +510,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 			});
 			openColorPickerButton = new JButton("open color picker");
 			openColorPickerButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					IJ.runPlugIn("ij.plugin.frame.ColorPicker", "");
 				}
@@ -490,6 +518,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 			
 			openFontsDialog = new JButton("open fonts dialog");
 			openFontsDialog.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					IJ.runPlugIn("ij.plugin.SimpleCommands", "fonts");
 				}
@@ -498,9 +527,9 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 			newTextRoiButton = new JButton("" + new Character((char) 8314)
 					+ " T  text");
 			newTextRoiButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
-					boolean fontsWindowsOpen = WindowManager.getFrame("Fonts") != null;
-					if (!fontsWindowsOpen) {
+					if (WindowManager.getWindow("Fonts") == null) {
 						IJ.run("Fonts...");
 					}
 					IJ.selectWindow("FigureJ");
@@ -524,6 +553,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			textOptionsButton = new JButton("" + new Character((char) 8230));
 			textOptionsButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					IJ.run("Fonts...");
 				}
@@ -532,28 +562,24 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 			newArrowRoiButton = new JButton("" + new Character((char) 8314)
 					+ new Character((char) 8599) + " arrow");
 			newArrowRoiButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
-								
 					IJ.selectWindow("FigureJ");
 					IJ.run("Select None");
-
-					Window fr[] = Window.getWindows();
-					boolean arrowsOptionsOpen = false;
-					for (int i = 0; i < fr.length; i++) {
-						if (fr[i].toString().indexOf("Arrow Tool") > 0
-								&& fr[i].isVisible())
-							arrowsOptionsOpen = true;
-					}
-					if (!arrowsOptionsOpen)
+					if (WindowManager.getWindow("Arrow Tool") == null) {
+						// Open the options window
 						IJ.doCommand("Arrow Tool...");
-					IJ.showStatus("Arrow tool selected");
-
+						IJ.showStatus("Arrow tool selected");
+					} else {
+						// Just activate the arrow tool
+						IJ.setTool("Arrow tool");
+					}
 				}
-
 			});
 
 			arrowOptionsButton = new JButton("" + new Character((char) 8230));
 			arrowOptionsButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					IJ.doCommand("Arrow Tool...");
 				}
@@ -561,6 +587,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			addItemToOverlayButton = new JButton("add");
 			addItemToOverlayButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					ImagePlus imp = IJ.getImage();
 					IJ.run(imp, "Add Selection...", "");
@@ -572,6 +599,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			duplicateItemButton = new JButton("duplicate");
 			duplicateItemButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					ImagePlus imp = IJ.getImage();
 					Roi roi = imp.getRoi();
@@ -590,6 +618,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			hideOverlayButton = new JButton("hide");
 			hideOverlayButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					IJ.run("Hide Overlay");
 				}
@@ -597,6 +626,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			showOverlayButton = new JButton("show");
 			showOverlayButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					IJ.run("Show Overlay");
 				}
@@ -604,6 +634,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			printFigure = new JButton("print at actual size");
 			printFigure.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					double res = mainWindow.getDPI();
 					IJ.run("Select None");
@@ -613,6 +644,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			drawLabelButton = new JButton("draw");
 			drawLabelButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					// reset flag if alt is pressed, to reset the label counter
 					boolean reset = (e.getModifiers() & ActionEvent.ALT_MASK) != 0;
@@ -631,6 +663,7 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 
 			removeLabelButton = new JButton("remove");
 			removeLabelButton.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					activePanel.removeLabel(mainWindow.getImagePlus()
 							.getOverlay());
@@ -639,7 +672,10 @@ public class AnnotationsAndOptionsPanel extends JFrame implements LeafListener {
 				}
 			});
 	}
-	
+
+	/**
+	 * TODO Documentation
+	 */
 	private void initTooltips() {
 		newTextRoiButton.setToolTipText("add a new text");
 		newArrowRoiButton.setToolTipText("add a new arrow");
