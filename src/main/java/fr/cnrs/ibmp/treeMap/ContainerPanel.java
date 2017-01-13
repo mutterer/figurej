@@ -383,43 +383,45 @@ public class ContainerPanel extends Panel {
 	}
 
 	@Override
-	protected void setX0PreservingX1(int x0) //throws SideLengthTooSmallException {
-	{
-		if(xPos+panelWidth-x0<Panel.minLeafSideLength) {
-			System.out.println("EXCEPTION in container: setX0PreservingX1!!! report that to edda please");
-			//throw new SideLengthTooSmallException();
+	protected void setX0PreservingX1(int x0) {
+		if (xPos + panelWidth - x0 < Panel.minLeafSideLength) {
+			System.out.println(
+				"EXCEPTION in container: setX0PreservingX1!!! report that to edda please");
+			// throw new SideLengthTooSmallException();
 		}
-		if(horizontallySplitable) {
-			for(Panel p: children)	
+
+		if (horizontallySplitable) {
+			for (Panel p : children) {
 				p.setX0PreservingX1(x0);
-		}
-		else {
+			}
+		} else {
 			Panel myFirstChild = children.get(0);
 			myFirstChild.setX0PreservingX1(x0);
 		}
 
-		panelWidth = xPos+panelWidth - x0;
-		xPos = x0; //change things only if changing the children's width worked
+		panelWidth = xPos + panelWidth - x0;
+		xPos = x0; // change things only if changing the children's width worked
 	}
 
 	@Override
-	protected void setY0PreservingY1(int y0) //throws SideLengthTooSmallException {
-	{
-		if(yPos+panelHeight-y0<Panel.minLeafSideLength) {
-			System.out.println("EXCEPTION in container: setY0PreservingY1!!! report that to edda please");
-			//throw new SideLengthTooSmallException();
+	protected void setY0PreservingY1(int y0) {
+		if (yPos + panelHeight - y0 < Panel.minLeafSideLength) {
+			System.out.println(
+				"EXCEPTION in container: setY0PreservingY1!!! report that to edda please");
+			// throw new SideLengthTooSmallException();
 		}
-		if(!horizontallySplitable) {
-			for(Panel p: children)
+
+		if (!horizontallySplitable) {
+			for (Panel p : children) {
 				p.setY0PreservingY1(y0);
-		}
-		else {
+			}
+		} else {
 			Panel myFirstChild = children.get(0);
 			myFirstChild.setY0PreservingY1(y0);
 		}
 
-		panelHeight = yPos+panelHeight - y0;
-		yPos = y0;   //change things only if changing the children's height worked
+		panelHeight = yPos + panelHeight - y0;
+		yPos = y0; // change things only if changing the children's height worked
 	}
 
 	@Override
@@ -428,15 +430,31 @@ public class ContainerPanel extends Panel {
 		children.add(child);	
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param i
+	 * @param child
+	 */
 	protected void addChild(int i, Panel child) {
 		child.setParent(this);
-		children.add(i, child);	
+		children.add(i, child);
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param i
+	 */
 	protected void removeChild(int i) {
 		children.remove(i);
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param p
+	 */
 	protected void removeChild(Panel p) {
 		children.remove(p);
 	}
