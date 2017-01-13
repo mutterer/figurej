@@ -81,22 +81,18 @@ public class SeparatorPanel extends Panel{
 		return currentClosest;
 	}
 
-	/** returns true if x and y are close the panel */
-	@Override
-	public boolean isClicked(int x, int y, int tol)
-	{
-		if(x >= xPos-tol && x <= xPos+panelWidth+tol && y >= yPos-tol && y <= yPos+panelHeight+tol)
-			return true;
-		return false;
-
-	}
 	@Override
 	public Roi getHighlightROI() {
 		Roi r = new Roi(this.getX(), this.getY(), this.getW()+1, this.getH()+1);
 		r.setFillColor(Colors.decode("#66ff0000", null));
 		return r;
 	}
-	
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param newColor
+	 */
 	public static void setColor(int newColor) {
 		rgbDefColor = newColor;
 	}

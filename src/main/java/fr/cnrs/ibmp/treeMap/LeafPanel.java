@@ -1,6 +1,15 @@
-// TODO Missing license header
 package fr.cnrs.ibmp.treeMap;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.List;
+
+import fr.cnrs.ibmp.dataSets.DataSource;
+import fr.cnrs.ibmp.labels.LabelPosition;
+import fr.cnrs.ibmp.windows.MainController;
+import fr.cnrs.ibmp.windows.MainWindow;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -14,23 +23,11 @@ import ij.plugin.Colors;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.text.DecimalFormat;
-import java.util.List;
-
-import fr.cnrs.ibmp.windows.MainController;
-import fr.cnrs.ibmp.windows.MainWindow;
-import fr.cnrs.ibmp.dataSets.AbstractDataSource;
-import fr.cnrs.ibmp.dataSets.DataSource;
-import fr.cnrs.ibmp.dataSets.FileDataSource;
-import fr.cnrs.ibmp.labels.LabelPosition;
-
 /**
  * Panel that shows an image and contains a link to a {@link DataSource}. It cannot have any children. 
- * 
+ * <p>
  * (c) IBMP-CNRS 
- * 
+ * </p>
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
@@ -46,14 +43,6 @@ public class LeafPanel extends Panel {
 	// TODO We might be able to remove this state variable
 	private boolean hasImg = false;
 
-	public boolean isHasImg() {
-		return hasImg;
-	}
-
-	public void setHasImg(boolean hasImg) {
-		this.hasImg = hasImg;
-	}
-
 	private int[] myPanelPixels;
 
 	// label stuff
@@ -65,6 +54,11 @@ public class LeafPanel extends Panel {
 	private Font labelFont = null;
 	private LabelPosition labelPos = LabelPosition.TopLeft;
 	private transient ImageProcessor ip = new ColorProcessor(10, 10);
+
+	/**
+	 * State variable that is used to denote a hidden label for which
+	 * {@code hasLabel && !overlay.contains(label)} holds.
+	 */
 	private boolean hasLabel = false;
 
 	// scale bar stuff
@@ -74,45 +68,48 @@ public class LeafPanel extends Panel {
 	private int yScaleOffset = this.getH() - 20;
 	private int scaleBarHeight = separatorWidth;
 	private double scaleBarWidth = 1;
-
-	public double getScaleBarWidth() {
-		return scaleBarWidth;
-	}
-
-	public void setScaleBarWidth(double scaleBarWidth) {
-		this.scaleBarWidth = scaleBarWidth;
-	}
-
 	private Color scalebarColor;
+
+	/**
+	 * State variable that is used to denote a hidden scalebar for which
+	 * {@code hasScalebar && !overlay.contains(scalebar)} holds.
+	 */
 	private boolean hasScalebar = false;
+
+	// TODO What is this variable doing?
 	private boolean scalebarVisible = false;
 	private boolean scalebarTextVisible = false;
 	private Font scaleBarTextFont = null;
 	private int scalebarLabelJustification = -1;
 
-	public int getScalebarLabelJustification() {
-		return scalebarLabelJustification;
-	}
-
-	public void setScalebarLabelJustification(int scalebarLabelJustification) {
-		this.scalebarLabelJustification = scalebarLabelJustification;
-	}
-
+	/**
+	 * Creates a {@link LeafPanel} at the provided coordinates.
+	 * 
+	 * @param xPos
+	 * @param yPos
+	 * @param w
+	 * @param h
+	 */
 	public LeafPanel(int xPos, int yPos, int w, int h) {
 		super(xPos, yPos, w, h);
 		maxW = w;
 		maxH = h;
 		updatePixelArray();
 
-		if (scaleBarHeight == 0)
+		if (scaleBarHeight == 0) {
 			scaleBarHeight = 5;
+		}
 	}
 
 	@Override
 	public void draw(ImagePlus resImg) {
-		if (hasLabel == true)
+		if (hasLabel) {
 			moveLabel(resImg.getOverlay());
-		moveScalebar(resImg);
+		}
+
+		if (hasScalebar) {
+			moveScalebar(resImg);
+		}
 
 		ImageProcessor imp = resImg.getProcessor();
 		int figHeight = resImg.getHeight();
@@ -161,31 +158,33 @@ public class LeafPanel extends Panel {
 		}
 	}
 
+	/**
+	 * TODO Documentation
+	 */
 	protected void updatePixelArray() {
-		if (hasImg)
+		if (hasImg) {
 			expandPixelArray();
-
-		else
+		} else {
 			getNewArrayPixels();
+		}
 	}
 
-	/** define the pixel values for each panel */
+	/**
+	 * Defines the pixel values for each panel
+	 */
 	private void getNewArrayPixels() {
-
-		myPanelPixels = new int[panelWidth * panelHeight];
-		for (int y = 0; y < panelHeight; y++)
-			for (int x = 0; x < panelWidth; x++)
-				myPanelPixels[y * panelWidth + x] = colorValue;
+		myPanelPixels = new int[getW() * getH()];
+		Arrays.fill(myPanelPixels, colorValue);
 		maxW = getW();
 		maxH = getH();
 	}
 
-	/** re-fill the panel with its original color */
+	/**
+	 * Re-fills the panel with its original color.
+	 */
 	public void eraseImage() {
 		hasImg = false;
-		for (int y = 0; y < panelHeight; y++)
-			for (int x = 0; x < panelWidth; x++)
-				myPanelPixels[y * panelWidth + x] = colorValue;
+		Arrays.fill(myPanelPixels, colorValue);
 	}
 
 	/**
@@ -194,22 +193,22 @@ public class LeafPanel extends Panel {
 	 */
 	private void expandPixelArray() {
 		int[] myTempPixels = new int[panelWidth * panelHeight];
+		Arrays.fill(myTempPixels, colorValue);
 		int offSetY = panelHeight / 2 - maxH / 2;
 		int offSetX = panelWidth / 2 - maxW / 2;
-		for (int y = 0; y < panelHeight; y++)
+		for (int y = 0; y < panelHeight; y++) {
 			for (int x = 0; x < panelWidth; x++) {
 				if (x >= offSetX && x < offSetX + maxW && y >= offSetY
-						&& y < offSetY + maxH)
+						&& y < offSetY + maxH) {
 					myTempPixels[y * panelWidth + x] = myPanelPixels[(y - offSetY)
 							* maxW + (x - offSetX)];
-				else
-					myTempPixels[y * panelWidth + x] = colorValue;
-
+				}
 				// if(maxW > x && maxH > y)
 				// myTempPixels[y*panelWidth + x] = myPanelPixels[y*maxW + x];
 				// else
 				// myTempPixels[y*panelWidth + x] = colorValue;
 			}
+		}
 		myPanelPixels = myTempPixels;
 		maxW = getW();
 		maxH = getH();
@@ -218,41 +217,49 @@ public class LeafPanel extends Panel {
 	@Override
 	public void setPixels(ImagePlus image) {
 		hasImg = true;
-		if (image.getProcessor() == null)
+		if (image.getProcessor() == null) {
 			image.setProcessor(IJ.getImage().getProcessor());
-		System.out.println(image.getProcessor() != null); // TODO is null after
-															// opening a new
-															// image
+		}
+		// TODO is null after opening a new image
+		System.out.println(image.getProcessor() != null);
 		image.setRoi(new Roi(getX(), getY(), getW(), getH()));
 		myPanelPixels = (int[]) image.getProcessor().crop().getPixels();
 		maxW = getW();
 		maxH = getH();
-
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param image
+	 */
 	public void setPanelPixels(ImagePlus image) {
 		hasImg = true;
-		if (image.getProcessor() == null)
+		if (image.getProcessor() == null) {
 			image.setProcessor(IJ.getImage().getProcessor());
-		System.out.println(image.getProcessor() != null); // TODO is null after
-															// opening a new
-															// image
+		}
+		// TODO is null after opening a new image
+		System.out.println(image.getProcessor() != null);
 		// image.setRoi(new Roi(getX(), getY(), getW(), getH()));
 		myPanelPixels = (int[]) image.getProcessor().getPixels();
 		maxW = getW();
 		maxH = getH();
-
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param pixels
+	 */
 	public void setPixels(int[] pixels) {
 		if (pixels.length == panelHeight * panelWidth) {
 			maxW = panelWidth;
 			maxH = panelHeight;
 			myPanelPixels = pixels;
 			hasImg = true;
-		} else
+		} else {
 			System.out.println("array length does not fit");
-
+		}
 	}
 
 	@Override
@@ -292,8 +299,7 @@ public class LeafPanel extends Panel {
 	}
 
 	@Override
-	protected void setX0PreservingX1(int x0) // throws
-												// SideLengthTooSmallException {
+	protected void setX0PreservingX1(final int x0)
 	{
 		removeROICoords();
 		if (xPos + panelWidth - x0 < minLeafSideLength) {
@@ -312,8 +318,7 @@ public class LeafPanel extends Panel {
 	}
 
 	@Override
-	protected void setY0PreservingY1(int y0) // throws
-												// SideLengthTooSmallException {
+	protected void setY0PreservingY1(final int y0)
 	{
 		removeROICoords();
 		if (yPos + panelHeight - y0 < minLeafSideLength) {
@@ -331,17 +336,34 @@ public class LeafPanel extends Panel {
 		}
 	}
 
-	@Override
+	/**
+	 * split a panel in the middle, either vertically or horizontally, depending
+	 * on the coordinates. only done if panels don't fall below their minimal
+	 * size.
+	 */
+	@Deprecated
 	public void split(int x0, int y0, int x1, int y1) {
 		parentPanel.split(x0, y0, x1, y1, this);
 	}
 
-	@Override
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param horizontally
+	 */
 	public void split(boolean horizontally) {
 		parentPanel.split(horizontally, this);
 	}
 
-	@Override
+	/**
+	 * Splits a panel into several panels of the same size. only done if panels
+	 * don't fall below their minimal size
+	 * 
+	 * @param horizontally if true panel is split horizontally into two panels, so
+	 *          that the panel width is preserved. else height is preserved.
+	 * @param nr number of panels the panel is split into.
+	 * @see LeafPanel
+	 */
 	public void split(int nr, boolean horizontally) {
 		parentPanel.split(nr, horizontally, this);
 	}
@@ -350,6 +372,18 @@ public class LeafPanel extends Panel {
 	public void remove(Overlay o) {
 		hideLabel(o);
 		parentPanel.remove(this);
+	}
+
+	public boolean hasImg() {
+		return hasImg;
+	}
+
+	public double getScaleBarWidth() {
+		return scaleBarWidth;
+	}
+
+	public int getScalebarLabelJustification() {
+		return scalebarLabelJustification;
 	}
 
 	@Override
@@ -371,21 +405,21 @@ public class LeafPanel extends Panel {
 		colorValue = newColor;
 	}
 
+	public void setScalebarLabelJustification(int scalebarLabelJustification) {
+		this.scalebarLabelJustification = scalebarLabelJustification;
+	}
+
+	public void setScaleBarWidth(double scaleBarWidth) {
+		this.scaleBarWidth = scaleBarWidth;
+	}
+
+	public void setHasImg(boolean hasImg) {
+		this.hasImg = hasImg;
+	}
+
 	@Override
 	public void recover() {
 		getNewArrayPixels();
-	}
-
-	/**
-	 * returns true if x and y are inside the panel from which a certain
-	 * tolerance border got subtracted
-	 */
-	@Override
-	public boolean isClicked(int x, int y, int tol) {
-		if (x >= xPos + tol && x <= xPos + panelWidth - tol && y >= yPos + tol
-				&& y <= yPos + panelHeight - tol)
-			return true;
-		return false;
 	}
 
 	@Override
@@ -403,56 +437,55 @@ public class LeafPanel extends Panel {
 		return s;
 	}
 
+	@Deprecated
 	private void removeROICoords() {
 		// imgData.setCoords(null, null);
 	}
 
 	/**
-	 * @param label
-	 *            text to display on the labeled panel
-	 * @return y distance between the left coordinate of the panel and the fist
-	 *         label letter
+	 * Computes the x coordinate of the label.
+	 * 
+	 * @return x coordinate of the first label letter
 	 */
-	private int getXLabelOffset() {
-		if (labelPos == LabelPosition.TopLeft
-				|| labelPos == LabelPosition.BottomLeft)
-			return this.getX() + xLabelOffset;
-		else {
-			if (ip == null)
-				ip = new ColorProcessor(10, 10);
-			ip.setFont(this.labelFont);
-			// ip.setFont(new Font(TextRoi.getFont(), TextRoi.getStyle(),
-			// TextRoi.getSize()));
-			return this.getX() + this.getW() - xLabelOffset
-					- ip.getStringWidth(labelText);
+	private int getXLabelPosition() {
+		if (labelPos == LabelPosition.TopLeft ||
+			labelPos == LabelPosition.BottomLeft)
+		{
+			return getX() + xLabelOffset;
 		}
+
+		// TODO Obsolete?
+		if (ip == null) {
+			ip = new ColorProcessor(10, 10);
+		}
+		ip.setFont(labelFont);
+		return getX() + getW() - xLabelOffset - ip.getStringWidth(labelText);
 	}
 
 	/**
-	 * @param label
-	 *            text to display on the labeled panel
-	 * @return x distance between the left coordinate of the panel and the fist
-	 *         label letter
+	 * Computes the y coordinate of the label.
+	 * 
+	 * @return y coordinate of the first label letter
 	 */
-	private int getYYLabelOffset() {
-		if (labelPos == LabelPosition.TopLeft
-				|| labelPos == LabelPosition.TopRight)
-			return this.getY() + yLabelOffset;
-		else {
-			if (ip == null)
-				ip = new ColorProcessor(10, 10);
-			ip.setFont(this.labelFont);
-			// ip.setFont(new Font(TextRoi.getFont(), TextRoi.getStyle(),
-			// TextRoi.getSize()));
-			return this.getY() + this.getH() - yLabelOffset
-					- ip.getFontMetrics().getHeight();
+	private int getYLabelPosition() {
+		if (labelPos == LabelPosition.TopLeft ||
+			labelPos == LabelPosition.TopRight)
+		{
+			return getY() + yLabelOffset;
 		}
+
+		// TODO Obsolete?
+		if (ip == null) {
+			ip = new ColorProcessor(10, 10);
+		}
+		ip.setFont(labelFont);
+		return getY() + getH() - yLabelOffset - ip.getFontMetrics().getHeight();
 	}
 
 	@Override
 	public void setLabel(ImagePlus resultFigure, String text, int xOffset,
-			int yOffset, LabelPosition pos) {
-
+		int yOffset, LabelPosition pos)
+	{
 		hasLabel = true;
 		labelPos = pos;
 		xLabelOffset = xOffset;
@@ -461,14 +494,17 @@ public class LeafPanel extends Panel {
 		labelText = text;
 
 		labelColor = Toolbar.getForegroundColor();
-		labelFont = new Font(TextRoi.getFont(), TextRoi.getStyle(),
-				TextRoi.getSize());
-		Overlay o = resultFigure.getOverlay();
-		if (o == null)
-			resultFigure.setOverlay(new Overlay());
+		labelFont = new Font(TextRoi.getFont(), TextRoi.getStyle(), TextRoi
+			.getSize());
 
-		o = resultFigure.getOverlay();
-		moveLabel(o);
+		Overlay overlay = resultFigure.getOverlay();
+		if (overlay == null) {
+			overlay = new Overlay();
+			resultFigure.setOverlay(overlay);
+		}
+
+		// TODO What if moveLabel fails?
+		moveLabel(overlay);
 	}
 
 	@Override
@@ -476,11 +512,15 @@ public class LeafPanel extends Panel {
 		if (o == null || !hasLabel) {
 			return;
 		}
-		if (label != null)
+
+		if (label != null) {
 			o.remove(label);
+		}
+
+		// TODO Check if imgData == null
 		imgData.setLabel(labelText);
 
-		label = new TextRoi(getXLabelOffset(), getYYLabelOffset(), labelText,
+		label = new TextRoi(getXLabelPosition(), getYLabelPosition(), labelText,
 				labelFont);
 		label.setStrokeColor(labelColor);
 		o.add(label);
@@ -489,16 +529,19 @@ public class LeafPanel extends Panel {
 	@Override
 	public void removeLabel(Overlay o) {
 		hasLabel = false;
-		if (label != null)
+		if (label != null) {
 			o.remove(label);
+		}
+
 		imgData.setLabel("");
 		label = null;
 	}
 
 	@Override
 	public void hideLabel(Overlay o) {
-		if (label != null)
+		if (label != null) {
 			o.remove(label);
+		}
 	}
 
 	@Override
@@ -611,52 +654,86 @@ public class LeafPanel extends Panel {
 		//scalebarTextVisible = false;
 	}
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @return
+	 */
 	public boolean isScalebarVisible() {
-		// TODO Auto-generated method stub
 		return scalebarVisible;
 	}
 
+	/**
+	 * TODO Documentation
+	 * @return
+	 */
 	public String getScaleBarText() {
-		// TODO Auto-generated method stub
-		if (!scalebarVisible)
+		if (!scalebarVisible) {
 			return "";
-		else
-			return "scalebar:"
-					+ IJ.d2s(scaleBarWidth * imgData.getPixelWidth(), 2)
-					+ imgData.getUnit();
-	}
-
-	public String getShortScaleBarText() {
-		// TODO Auto-generated method stub
-		if (!scalebarVisible)
-			return "";
-
-		else {
-			DecimalFormat df = new DecimalFormat("########.#######");
-			return df.format(scaleBarWidth * imgData.getPixelWidth())
-					+ " " + imgData.getUnit();
 		}
+
+		return "scalebar:"
+				+ IJ.d2s(scaleBarWidth * imgData.getPixelWidth(), 2)
+				+ imgData.getUnit();
 	}
 
-	public void setScalebarColor(Color c) {
-		// TODO Auto-generated method stub
-		this.scalebarColor = c;
+	/**
+	 * TODO Documentation
+	 * 
+	 * @return
+	 */
+	public String getShortScaleBarText() {
+		if (!scalebarVisible) {
+			return "";
+		}
+
+		DecimalFormat df = new DecimalFormat("########.#######");
+		return df.format(scaleBarWidth * imgData.getPixelWidth())
+				+ " " + imgData.getUnit();
+
 	}
 
-	public void setScaleBarTextVisible(boolean b) {
-		// TODO Auto-generated method stub
+	/**
+	 * TODO Documentation
+	 * @param c
+	 */
+	public void setScalebarColor(final Color c) {
+		scalebarColor = c;
+	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param b
+	 */
+	public void setScaleBarTextVisible(final boolean b) {
 		scalebarTextVisible = b;
 	}
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @return
+	 */
 	public boolean isScalebarTextVisible() {
-		// TODO Auto-generated method stub
 		return scalebarTextVisible;
 	}
 
+	/**
+	 * TODO Documentation
+	 *
+	 * @return
+	 */
 	public Font getScaleBarTextFont() {
 		return scaleBarTextFont;
 	}
 
-	public void setScaleBarTextFont(Font scaleBarTextFont) {
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param scaleBarTextFont
+	 */
+	public void setScaleBarTextFont(final Font scaleBarTextFont) {
 		this.scaleBarTextFont = scaleBarTextFont;
 	}
 
@@ -671,7 +748,7 @@ public class LeafPanel extends Panel {
 
 	public void clear() {
 		imgData.clear();
-		
+
 		eraseImage();
 		// HACK Ugly ugly code
 		hideScalebar(MainController.getInstance().getMainWindow().getImagePlus().getOverlay());

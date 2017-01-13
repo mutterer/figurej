@@ -6,6 +6,8 @@ import ij.gui.Roi;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import fr.cnrs.ibmp.dataSets.DataSource;
@@ -19,7 +21,7 @@ import fr.cnrs.ibmp.labels.LabelPosition;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public abstract class Panel implements Serializable {
+public abstract class Panel implements Serializable, PanelInterface {
 
 	private static final long serialVersionUID = 1L;
 	protected int xPos;
@@ -29,11 +31,19 @@ public abstract class Panel implements Serializable {
 	protected int panelHeight;
 
 	protected ContainerPanel parentPanel;
-	protected ArrayList<Panel> children = new ArrayList<Panel>(); 	// children  successively arranged! topmost / most left child first
+	protected List<Panel> children = new LinkedList<Panel>(); 	// children  successively arranged! topmost / most left child first
 
-	protected static int separatorWidth 		= 7;   				
-	protected static int minLeafSideLength 		= 20;
+	protected static int separatorWidth = 7;
+	protected static int minLeafSideLength = 20;
 
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param xPos
+	 * @param yPos
+	 * @param w
+	 * @param h
+	 */
 	public Panel(int xPos, int yPos, int w, int h) {
 		this.parentPanel = null;
 		this.xPos = xPos;
@@ -43,15 +53,31 @@ public abstract class Panel implements Serializable {
 		this.panelHeight = h;
 	}
 
-	/** returns true if x and y are inside the panel */
+	/**
+	 * Checks if a click was inside a {@link Panel}.
+	 * 
+	 * @param x x coordinate of a click (in pixels)
+	 * @param y y coordinate of a click (in pixels)
+	 * @param tol tolerance added to the panel's borders (in pixels)
+	 * @return true if {@code x} and {@code y} are inside the panel with an
+	 *         additional tolerance added to the panel's borders.
+	 */
 	public boolean isClicked(int x, int y, int tol) {
-		if(x >= xPos && x <= xPos+panelWidth && y >= yPos && y <= yPos+panelHeight)
+		if (x >= xPos + tol && x <= xPos + panelWidth - tol && y >= yPos + tol &&
+			y <= yPos + panelHeight - tol)
+		{
 			return true;
+		}
 		return false;
 	}
 
-	/** @return the panel the deepest down in the tree hierarchy that was clicked (should return a
-	 * leaf or separator). used to avoid overlays by containers. */
+	/**
+	 * TODO Documentation
+	 * 
+	 * @return the panel the deepest down in the tree hierarchy that was clicked
+	 *         (should return a leaf or separator). used to avoid overlays by
+	 *         containers.
+	 */
 	public Panel getClicked(int x, int y, int tol) {
 		Panel clicked = null;
 		if(this.isClicked(x, y, tol))
@@ -66,10 +92,15 @@ public abstract class Panel implements Serializable {
 		return clicked;
 	}
 
-	/**@param p panel the closest important y coordinate is searched for
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param p panel the closest important y coordinate is searched for
 	 * @param currentClosest some value e.g. max value
-	 * @return if no important coordinate (separator or middle point of a separator) is in the snap distance
-	 * region: currentClosest else the nearest of the y coordinates in the region */
+	 * @return if no important coordinate (separator or middle point of a
+	 *         separator) is in the snap distance region: currentClosest else the
+	 *         nearest of the y coordinates in the region
+	 */
 	public int getClosestY(Panel p, int currentClosest) {
 		for(Panel q: children) {
 			int cur = q.getClosestY(p, currentClosest);
@@ -78,84 +109,93 @@ public abstract class Panel implements Serializable {
 		}
 		return currentClosest;
 	}
-	
+
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param s
+	 * @return
+	 */
 	public String generateImageNotesString(String s) {
 		for(Panel child: children) {
 			String t = child.generateImageNotesString(s);
-			if(t != null && !t.equals(""))
+			if(t != null && !t.equals("")) {
 				s = t;
+			}
 		}
 		return s;
 	}
 
-	/**@param p panel the closest important x coordinate is searched for
+	/**
+	 * TODO Documentation
+	 * 
+	 * @param p panel the closest important x coordinate is searched for
 	 * @param currentClosest some large value, e.g. max value
-	 * @return if no important coordinate (separator or middle point of a separator) is in the snap distance
-	 * region: initial currentClosest value, else the nearest of the y coordinates in the region 
-	 * @see SeparatorPanel*/
+	 * @return if no important coordinate (separator or middle point of a
+	 *         separator) is in the snap distance region: initial currentClosest
+	 *         value, else the nearest of the y coordinates in the region
+	 * @see SeparatorPanel
+	 */
 	public int getClosestX(Panel p, int currentClosest) {
 		for(Panel q: children) {
 			int cur = q.getClosestX(p, currentClosest);
-			if(cur<currentClosest)
+			if(cur<currentClosest) {
 				currentClosest = cur;
+			}
 		}
 		return currentClosest;
 	}
 
-	/** splits a leaf panel by shrinking the panel and filling the gap with a separator and a new panel*/
-	protected void split(int x0, int y0, int x1, int y1, LeafPanel p){
-	}
-
-	/**split a panel in the middle.
-	 * @param horizontally if true panel is split horizontally into two panels, so that the panel width is preserved
-	 * else height is preserved
-	 * only done if panels don't fall below their minimal size */
-	protected void split(boolean horizontally, LeafPanel p){
-	}
-	
-	/** split a panel in the middle, either vertically or horizontally, depending on the coordinates.
-	 * only done if panels don't fall below their minimal size */
-	public void split(int x0, int y0, int x1, int y1){
-	}
-
-	public void split(boolean horizontally) {
-	}
-	
-	/**split a panel into several panels of the same size.
-	 * @param horizontally if true panel is split horizontally into two panels, so that the panel width is preserved
-	 * @param nr number of panels the panel is split into.
-	 * else height is preserved
-	 * only done if panels don't fall below their minimal size 
-	 * @see LeafPanel*/
-	public void split(int nr, boolean horizontally) {
-	}
-
+	/**
+	 * TODO Documentation
+	 *
+	 * @param p
+	 */
 	protected void remove(LeafPanel p) {
+		// NB
 	}
 
-	/** @param removeLeaf the leaf (image) that gets removed from the tree (result image)
-	 * if a tree contains only a single leaf, this one can't get removed */
+	/**
+	 * If a tree contains only a single leaf, this one can't get removed.
+	 * 
+	 * @param removeLeaf the leaf (image) that gets removed from the tree (result
+	 *          image)
+	 */
 	public void remove(Overlay o) {
+		// NB
 	}
 
-	/** recover from serialization process*/
+	/**
+	 * Recover from serialization process.
+	 */
+	@Deprecated
 	public void recover() {
 	}
 
-	/**@param resIMG the image to draw on 
-	 * the panel draws its pixels in the right position to on the resIMG*/
+	/**
+	 * Draws pixels in the right position onto the input {@link ImagePlus}.
+	 * 
+	 * @param resIMG the {@link ImagePlus} to draw on.
+	 */
 	public void draw(ImagePlus resIMG) {
 		for (Panel child : children) {
 			child.draw(resIMG);
 		}
 	}
-	
-	/** @return ROI of panel size and position */
+
+	/**
+	 * @return ROI of panel size and position
+	 */
 	public Roi getHighlightROI() {
 		return null;
 	}
 
-	/** print the panel with its dimensions and type as well as its children*/
+	/**
+	 * Prints the panel with its dimensions and type as well as its children.
+	 * 
+	 * @deprecated Use {@link #toString()} instead.
+	 */
+	@Deprecated
 	public void print() {
 		System.out.println(xPos+" "+yPos+"\t "+panelWidth+" "+panelHeight+"\t"+this.getClass());
 		for (Panel child : children) {
@@ -164,40 +204,72 @@ public abstract class Panel implements Serializable {
 		System.out.println();
 	}
 
+	@Override
+	public String toString() {
+		String s = String.format("%d %d\t%d %d\t%s%n", xPos, yPos, panelWidth, panelHeight, this.getClass());
+		for (Panel child : children) {
+			s += child.toString();
+		}
+
+		return s;
+	}
+
 	/**
-	 * @return subtree of the current panel	 */
-	public ArrayList<Panel> getChildren() {
+	 * @return subtree of the current panel
+	 */
+	public Collection<Panel> getChildren() {
 		return children;
 	}
 
-	/**@return width of the panel */
+	/**
+	 * @return width of the panel
+	 */
 	public int getW() {
 		return panelWidth;
 	}
-	/**@return height of the panel */
+
+	/**
+	 * @return height of the panel
+	 */
 	public int getH() {
 		return panelHeight;
 	}
-	/**@return parent panel (panel of the next higher level in the tree)*/
+
+	/**
+	 * @return parent panel (panel of the next higher level in the tree)
+	 */
 	public ContainerPanel getParent() {
 		return parentPanel;
 	}
-	/**@return x position of the panel. root panel should have a xPos of 0 */
+
+	/**
+	 * @return x position of the panel. root panel should have a xPos of 0
+	 */
 	public int getX() {
 		return xPos;
 	}
-	/**@return y position of the panel. root panel should have a yPos of 0 */
+
+	/**
+	 * @return y position of the panel. root panel should have a yPos of 0
+	 */
 	public int getY() {
 		return yPos;
 	}
-	/**changes the x1 coordinate of the panel
-	 * @param w new width of the panel 
-	 * please call this method only if checking the ability of the panel to change its size 
-	 * with the canSetW(..) method if you want to have your panels to have a minimum side length*/
-	public void setW(int w)  //throws SideLengthTooSmallException {
-	{
+
+	/**
+	 * Changes the x1 coordinate of the panel.
+	 * <p>
+	 * please call this method only if checking the ability of the panel to change
+	 * its size with the canSetW(..) method if you want to have your panels to
+	 * have a minimum side length
+	 * </p>
+	 * 
+	 * @param w new width of the panel
+	 */
+	public void setW(int w) {
 		this.panelWidth = w;
 	}
+
 	/**changes the y1 coordinate of the panel
 	 * @param h new height of the panel 
 	 * please call this method only if checking the ability of the panel to change its size 
