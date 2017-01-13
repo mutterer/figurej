@@ -30,7 +30,7 @@ import javax.swing.ImageIcon;
 
 import fr.cnrs.ibmp.treeMap.ContainerPanel;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
-import fr.cnrs.ibmp.treeMap.Panel;
+import fr.cnrs.ibmp.treeMap.AbstractPanel;
 import fr.cnrs.ibmp.treeMap.SeparatorPanel;
 import fr.cnrs.ibmp.LeafEvent;
 import fr.cnrs.ibmp.LeafListener;
@@ -60,13 +60,13 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 	private int figureHeight = 512;
 
 	/** Root of the tree of panel objects storing images+data or separator color. */
-	private Panel rootPanel;
+	private AbstractPanel rootPanel;
 
 	/** Result image and its pixels. */
 	private transient ImagePlus resultFigure;
 
-	/** {@link Panel} that was last clicked. */
-	private Panel selectedPanel;
+	/** {@link AbstractPanel} that was last clicked. */
+	private AbstractPanel selectedPanel;
 
 	// TODO Use Point instead?
 	/** TODO Documentation */
@@ -134,7 +134,7 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 
 		// start to build the panel tree structure
 		rootPanel = new ContainerPanel(0, 0, figureWidth, figureHeight);
-		Panel p = new LeafPanel(0, 0, figureWidth, figureHeight);
+		AbstractPanel p = new LeafPanel(0, 0, figureWidth, figureHeight);
 		selectedPanel = p;
 		rootPanel.addChild(p);
 		rootPanel.setSeparatorWidth(sepSize);
@@ -232,7 +232,7 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 
 			// log the separator's parents panels dimensions to the status bar.
 			String dimensions = "";
-			for (Panel p : selectedPanel.getParent().getChildren()) {
+			for (AbstractPanel p : selectedPanel.getParent().getChildren()) {
 				if (!(p instanceof SeparatorPanel))
 					dimensions += String.format("%.2f x %.2f ", p.getW() * imp
 						.getCalibration().pixelWidth, p.getH() * imp
@@ -258,7 +258,7 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 	 */
 	public void mouseMoved(ImagePlus imp, MouseEvent e) {
 		ImageCanvas canv = imp.getCanvas();
-		Panel hoveredPanel = rootPanel.getClicked(canv.offScreenX(e.getX()), canv
+		AbstractPanel hoveredPanel = rootPanel.getClicked(canv.offScreenX(e.getX()), canv
 			.offScreenY(e.getY()), getTol());
 		if (hoveredPanel != null) {
 			if (hoveredPanel instanceof LeafPanel) {
@@ -291,7 +291,7 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 	 */
 	public void mousePressed(ImagePlus imp, MouseEvent e) {
 		ImageCanvas canv = imp.getCanvas();
-		Panel clickedPanel = rootPanel.getClicked(canv.offScreenX(e.getX()),
+		AbstractPanel clickedPanel = rootPanel.getClicked(canv.offScreenX(e.getX()),
 				canv.offScreenY(e.getY()), getTol());
 
 		if (clickedPanel != null) {
@@ -305,7 +305,7 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 	public void mouseReleased(ImagePlus imp, MouseEvent e) {
 		// IJ.log("release");
 		ImageCanvas canv = imp.getCanvas();
-		Panel releasedPanel = rootPanel.getClicked(canv.offScreenX(e.getX()),
+		AbstractPanel releasedPanel = rootPanel.getClicked(canv.offScreenX(e.getX()),
 				canv.offScreenY(e.getY()), getTol());
 		if ((releasedPanel != null) && (releasedPanel != selectedPanel)) {
 			IJ.showStatus("What did you expect?");
@@ -493,14 +493,14 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 	/**
 	 * @return the last panel the user clicked on
 	 */
-	public Panel getSelectedPanel() {
+	public AbstractPanel getSelectedPanel() {
 		return selectedPanel;
 	}
 
 	/**
 	 * Sets {@link #selectedPanel} and makes it the active selection in the UI.
 	 */
-	public void setSelectedPanel(final Panel p) {
+	public void setSelectedPanel(final AbstractPanel p) {
 		selectedPanel = p;
 		showROI();
 	}
@@ -533,7 +533,7 @@ public class MainWindow extends ImagePlus implements Serializable, LeafListener 
 		return new Point(mouseReleasedPoint[0], mouseReleasedPoint[1]);
 	}
 
-	public Panel getRootPanel() {
+	public AbstractPanel getRootPanel() {
 		return rootPanel;
 	}
 

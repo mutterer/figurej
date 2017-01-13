@@ -13,7 +13,7 @@ import ij.process.ImageProcessor;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public class SeparatorPanel extends Panel{
+public class SeparatorPanel extends AbstractPanel{
 
 	private static final long serialVersionUID = 1L;
 	private static int rgbDefColor = 0xff000000 | (255<<16) | (255<<8) | 255;
@@ -56,7 +56,7 @@ public class SeparatorPanel extends Panel{
 	}
 
 	@Override
-	public int getClosestY(Panel p, int currentClosest) {
+	public int getClosestY(AbstractPanel p, int currentClosest) {
 		if ((this != p)&&(this.getW()>this.getH())) {
 			if(this.getY()>p.getY()-snapDist && this.getY()<p.getY()+snapDist)
 				currentClosest = this.getY();
@@ -69,7 +69,7 @@ public class SeparatorPanel extends Panel{
 	}
 
 	@Override
-	public int getClosestX(Panel p, int currentClosest) {
+	public int getClosestX(AbstractPanel p, int currentClosest) {
 		if( (this != p)&&(this.getW()<this.getH())) {
 			if(this.getX()>p.getX()-snapDist && this.getX()<p.getX()+snapDist)
 				currentClosest = this.getX();

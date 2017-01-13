@@ -31,7 +31,7 @@ import ij.process.ImageProcessor;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public class LeafPanel extends Panel {
+public class LeafPanel extends AbstractPanel {
 
 	private static final long serialVersionUID = 1L;
 

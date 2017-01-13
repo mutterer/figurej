@@ -39,7 +39,7 @@ import fr.cnrs.ibmp.dataSets.DataSources;
 import fr.cnrs.ibmp.dataSets.FileDataSource;
 import fr.cnrs.ibmp.dataSets.ImageDataSource;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
-import fr.cnrs.ibmp.treeMap.Panel;
+import fr.cnrs.ibmp.treeMap.AbstractPanel;
 import fr.cnrs.ibmp.utilities.Constants;
 import fr.cnrs.ibmp.utilities.Interpolation;
 import ij.IJ;
@@ -442,7 +442,7 @@ public class FigureControlPanel extends JFrame implements LeafListener,
 			public void actionPerformed(ActionEvent e) {
 				notifyLeafRemoved(new LeafEvent(activePanel));
 				
-				Panel p = mainController.getSelectedPanel();
+				AbstractPanel p = mainController.getSelectedPanel();
 				if (p instanceof LeafPanel)
 					activePanel = (LeafPanel) p;
 			}

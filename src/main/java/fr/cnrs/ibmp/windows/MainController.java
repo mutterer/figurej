@@ -31,7 +31,7 @@ import fr.cnrs.ibmp.dataSets.ImagePlusDataSource;
 import fr.cnrs.ibmp.serialize.DefaultSerializer;
 import fr.cnrs.ibmp.serialize.Serializer;
 import fr.cnrs.ibmp.treeMap.LeafPanel;
-import fr.cnrs.ibmp.treeMap.Panel;
+import fr.cnrs.ibmp.treeMap.AbstractPanel;
 import fr.cnrs.ibmp.utilities.Constants;
 import ij.CommandListener;
 import ij.CompositeImage;
@@ -137,7 +137,7 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		mainWindow.calibrateImage(newFigureDialog.getResolution(), newFigureDialog.getUnit());
 		
 		// Initialize activePanel
-		Panel p = mainWindow.getSelectedPanel();
+		AbstractPanel p = mainWindow.getSelectedPanel();
 		if (p instanceof LeafPanel) {
 			activePanel = (LeafPanel) p;
 		} else {
@@ -472,7 +472,7 @@ public class MainController implements Serializable, NewFigureListener, SaveFigu
 		leaf.remove(mainWindow.getImagePlus().getOverlay());
 	}
 
-	public Panel getSelectedPanel() {
+	public AbstractPanel getSelectedPanel() {
 		return mainWindow.getSelectedPanel();
 	}
 

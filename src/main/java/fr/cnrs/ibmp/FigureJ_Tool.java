@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.event.EventListenerList;
 
 import fr.cnrs.ibmp.treeMap.LeafPanel;
-import fr.cnrs.ibmp.treeMap.Panel;
+import fr.cnrs.ibmp.treeMap.AbstractPanel;
 import fr.cnrs.ibmp.utilities.Constants;
 import fr.cnrs.ibmp.windows.MainController;
 import fr.cnrs.ibmp.windows.MainWindow;
@@ -87,7 +87,7 @@ public class FigureJ_Tool extends PlugInTool {
 			mainWindow.mousePressed(imp, e);
 //			int count = e.getClickCount();
 			
-			Panel p = mainWindow.getSelectedPanel();
+			AbstractPanel p = mainWindow.getSelectedPanel();
 			/* Check whether the user has selected a LeafPanel or a SeparatorPanel.
 			 * Enable (leaf) or disable (separator) the respective buttons in the
 			 * FigureControlPanel. */

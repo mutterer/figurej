@@ -8,7 +8,7 @@ import java.util.ArrayList;
 /**
  * An invisible panel that can contain leaf panels (i.e. panels that can display
  * an image) or further containers building up a nested structure of
- * {@link Panel}s. All the elements in a container have either the same height,
+ * {@link AbstractPanel}s. All the elements in a container have either the same height,
  * which makes it a container that can be split vertically, or the same width,
  * such that it can be split horizontally.
  * <p>
@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
-public class ContainerPanel extends Panel {
+public class ContainerPanel extends AbstractPanel {
 
 	private static final long serialVersionUID = 1L;
 
@@ -78,7 +78,7 @@ public class ContainerPanel extends Panel {
 			int child0Height = child0Y1 - child0.yPos;
 			int child1Height = child0.yPos+child0.panelHeight - child1Y0;
 
-			if(child0Height<Panel.minLeafSideLength || child1Height<Panel.minLeafSideLength)
+			if(child0Height<AbstractPanel.minLeafSideLength || child1Height<AbstractPanel.minLeafSideLength)
 			{
 				System.out.println(smallSidelengthWarning);
 				return;
@@ -94,7 +94,7 @@ public class ContainerPanel extends Panel {
 			int child0Width = child0X1 - child0.xPos;
 			int child1Width = child0.xPos+child0.panelWidth - child1X0;
 
-			if(child0Width<Panel.minLeafSideLength || child1Width<Panel.minLeafSideLength)
+			if(child0Width<AbstractPanel.minLeafSideLength || child1Width<AbstractPanel.minLeafSideLength)
 			{
 				System.out.println(smallSidelengthWarning);
 				return;
@@ -145,7 +145,7 @@ public class ContainerPanel extends Panel {
 		else
 			newLeafSideLength = (child0.panelWidth -(nr-1)*separatorWidth) / nr;
 
-		if(newLeafSideLength < Panel.minLeafSideLength) {
+		if(newLeafSideLength < AbstractPanel.minLeafSideLength) {
 			IJ.error("this image is too small to split it into "+nr);
 			return;
 		}
@@ -154,7 +154,7 @@ public class ContainerPanel extends Panel {
 			horizontallySplitable = horizontalSplit;			// set split preference on first split
 		
 		ContainerPanel container = new ContainerPanel(child0.getX(), child0.getY(), child0.getW(), child0.getH());
-		ArrayList<Panel> childrenTemp = new ArrayList<Panel>();
+		ArrayList<AbstractPanel> childrenTemp = new ArrayList<AbstractPanel>();
 		int separatorPos = 0;
 		
 		if (horizontalSplit) {
@@ -170,7 +170,7 @@ public class ContainerPanel extends Panel {
 				childrenTemp.add(leaf);
 				separatorPos = separatorPos+separatorWidth+newLeafSideLength;
 			}
-			Panel lastNewChild = childrenTemp.get(childrenTemp.size()-1);
+			AbstractPanel lastNewChild = childrenTemp.get(childrenTemp.size()-1);
 			lastNewChild.setH(lastNewChild.getH()+ (oldChildH-nr*newLeafSideLength-(nr-1)*separatorWidth));	// handle rounding errors
 		} else {
 			int oldChildW = child0.getW();
@@ -184,7 +184,7 @@ public class ContainerPanel extends Panel {
 				childrenTemp.add(leafi);
 				separatorPos = separatorPos+separatorWidth+newLeafSideLength;
 			}
-			Panel lastNewChild = childrenTemp.get(childrenTemp.size()-1);
+			AbstractPanel lastNewChild = childrenTemp.get(childrenTemp.size()-1);
 			lastNewChild.setW(lastNewChild.getW()+ (oldChildW-nr*newLeafSideLength-(nr-1)*separatorWidth));	// handle rounding errors
 		}
 
@@ -243,8 +243,8 @@ public class ContainerPanel extends Panel {
 					" (you should always have sizes like: nr. of leafs (the leafs^^) + nr. of leafs -1 elements (separators))");
 			return;	
 		}
-		Panel child0 = children.get(children.indexOf(separator)-1);		// the panels going to be reshaped
-		Panel child1 = children.get(children.indexOf(separator)+1);
+		AbstractPanel child0 = children.get(children.indexOf(separator)-1);		// the panels going to be reshaped
+		AbstractPanel child1 = children.get(children.indexOf(separator)+1);
 
 		if(horizontallySplitable) {
 			int seperatorY0 = mouseY;//- defaultSeparatorWidth/2;
@@ -257,7 +257,7 @@ public class ContainerPanel extends Panel {
 				child1Height = children.get(children.indexOf(child1)+1).getY() - child1Y0;
 			}
 
-			if(child0Height<Panel.minLeafSideLength || child1Height <Panel.minLeafSideLength) { 	// insufficient for containers!
+			if(child0Height<AbstractPanel.minLeafSideLength || child1Height <AbstractPanel.minLeafSideLength) { 	// insufficient for containers!
 				System.out.println(smallSidelengthWarning);
 				return;
 			}
@@ -279,7 +279,7 @@ public class ContainerPanel extends Panel {
 				child1Width = children.get(children.indexOf(child1)+1).getX() - child1X0;
 			}
 
-			if(child0Width<Panel.minLeafSideLength || child1Width <Panel.minLeafSideLength){ 	// insufficient for containers!
+			if(child0Width<AbstractPanel.minLeafSideLength || child1Width <AbstractPanel.minLeafSideLength){ 	// insufficient for containers!
 				System.out.println(smallSidelengthWarning);
 				return;
 			}
@@ -297,7 +297,7 @@ public class ContainerPanel extends Panel {
 	@Override
 	public void remove(LeafPanel removeLeaf)
 	{
-		Panel growingPanel;
+		AbstractPanel growingPanel;
 
 		if(children.size()<=1)
 		{
@@ -344,17 +344,17 @@ public class ContainerPanel extends Panel {
 	@Override
 	public void setW(int w) //throws SideLengthTooSmallException {
 	{
-		if(w<Panel.minLeafSideLength) {
+		if(w<AbstractPanel.minLeafSideLength) {
 			System.out.println("EXCEPTION in container: setW!!! report that to edda please");
 			//throw new SideLengthTooSmallException();
 		}
 
 		if(horizontallySplitable) {
-			for(Panel p: children) // p = horizontally splitable if not leaf  	
+			for(AbstractPanel p: children) // p = horizontally splitable if not leaf  	
 				p.setW(w);
 		}
 		else {
-			Panel myLastChild = children.get(children.size()-1);
+			AbstractPanel myLastChild = children.get(children.size()-1);
 			myLastChild.setW( myLastChild.getW()-panelWidth+w);
 		}
 
@@ -365,17 +365,17 @@ public class ContainerPanel extends Panel {
 	@Override
 	public void setH(int h) //throws SideLengthTooSmallException {
 	{
-		if(h<Panel.minLeafSideLength) {
+		if(h<AbstractPanel.minLeafSideLength) {
 			System.out.println("EXCEPTION in container: setH!!! report that to edda please");
 			//throw new SideLengthTooSmallException();
 		}
 
 		if(!horizontallySplitable) {
-			for(Panel p: children)	
+			for(AbstractPanel p: children)	
 				p.setH(h);
 		}
 		else {
-			Panel myLastChild = children.get(children.size()-1); 
+			AbstractPanel myLastChild = children.get(children.size()-1); 
 			myLastChild.setH(myLastChild.getH()-(panelHeight-h));
 		}
 
@@ -384,18 +384,18 @@ public class ContainerPanel extends Panel {
 
 	@Override
 	protected void setX0PreservingX1(int x0) {
-		if (xPos + panelWidth - x0 < Panel.minLeafSideLength) {
+		if (xPos + panelWidth - x0 < AbstractPanel.minLeafSideLength) {
 			System.out.println(
 				"EXCEPTION in container: setX0PreservingX1!!! report that to edda please");
 			// throw new SideLengthTooSmallException();
 		}
 
 		if (horizontallySplitable) {
-			for (Panel p : children) {
+			for (AbstractPanel p : children) {
 				p.setX0PreservingX1(x0);
 			}
 		} else {
-			Panel myFirstChild = children.get(0);
+			AbstractPanel myFirstChild = children.get(0);
 			myFirstChild.setX0PreservingX1(x0);
 		}
 
@@ -405,18 +405,18 @@ public class ContainerPanel extends Panel {
 
 	@Override
 	protected void setY0PreservingY1(int y0) {
-		if (yPos + panelHeight - y0 < Panel.minLeafSideLength) {
+		if (yPos + panelHeight - y0 < AbstractPanel.minLeafSideLength) {
 			System.out.println(
 				"EXCEPTION in container: setY0PreservingY1!!! report that to edda please");
 			// throw new SideLengthTooSmallException();
 		}
 
 		if (!horizontallySplitable) {
-			for (Panel p : children) {
+			for (AbstractPanel p : children) {
 				p.setY0PreservingY1(y0);
 			}
 		} else {
-			Panel myFirstChild = children.get(0);
+			AbstractPanel myFirstChild = children.get(0);
 			myFirstChild.setY0PreservingY1(y0);
 		}
 
@@ -425,7 +425,7 @@ public class ContainerPanel extends Panel {
 	}
 
 	@Override
-	public void addChild(Panel child) {
+	public void addChild(AbstractPanel child) {
 		child.setParent(this);
 		children.add(child);	
 	}
@@ -436,7 +436,7 @@ public class ContainerPanel extends Panel {
 	 * @param i
 	 * @param child
 	 */
-	protected void addChild(int i, Panel child) {
+	protected void addChild(int i, AbstractPanel child) {
 		child.setParent(this);
 		children.add(i, child);
 	}
@@ -455,22 +455,22 @@ public class ContainerPanel extends Panel {
 	 * 
 	 * @param p
 	 */
-	protected void removeChild(Panel p) {
+	protected void removeChild(AbstractPanel p) {
 		children.remove(p);
 	}
 
 	@Override
 	public boolean canSetW(int w) {
-		if(w < Panel.minLeafSideLength)
+		if(w < AbstractPanel.minLeafSideLength)
 			return false;
 		if(horizontallySplitable)
-			for(Panel p: children) {
+			for(AbstractPanel p: children) {
 				if(!p.canSetW(w)) 
 					return false;
 			}
 
 		else {
-			Panel myLastChild = children.get(children.size()-1);
+			AbstractPanel myLastChild = children.get(children.size()-1);
 			if(!myLastChild.canSetW( myLastChild.getW()-panelWidth+w))
 				return false;
 		}
@@ -479,16 +479,16 @@ public class ContainerPanel extends Panel {
 
 	@Override
 	public boolean canSetH(int h) {
-		if(h < Panel.minLeafSideLength)
+		if(h < AbstractPanel.minLeafSideLength)
 			return false;
 
 		if(!horizontallySplitable) {
-			for(Panel p: children)	
+			for(AbstractPanel p: children)	
 				if(!p.canSetH(h))
 					return false;
 		}
 		else {
-			Panel myLastChild = children.get(children.size()-1); 
+			AbstractPanel myLastChild = children.get(children.size()-1); 
 			if(!myLastChild.canSetH(myLastChild.getH()-(panelHeight-h)))
 				return false;
 		}
@@ -497,16 +497,16 @@ public class ContainerPanel extends Panel {
 
 	@Override
 	protected boolean canSetX0PreservingX1(int x0) {
-		if(xPos+panelWidth - x0 < Panel.minLeafSideLength)
+		if(xPos+panelWidth - x0 < AbstractPanel.minLeafSideLength)
 			return false;
 
 		if(horizontallySplitable) {
-			for(Panel p: children)	
+			for(AbstractPanel p: children)	
 				if(p.canSetX0PreservingX1(x0)==false)
 					return false;
 		}
 		else {
-			Panel myFirstChild = children.get(0);
+			AbstractPanel myFirstChild = children.get(0);
 			if(myFirstChild.canSetX0PreservingX1(x0)==false)
 				return false;
 		}
@@ -515,16 +515,16 @@ public class ContainerPanel extends Panel {
 
 	@Override
 	protected boolean canSetY0PreservingY1(int y0) {
-		if(yPos+panelHeight-y0<Panel.minLeafSideLength) 
+		if(yPos+panelHeight-y0<AbstractPanel.minLeafSideLength) 
 			return false;
 
 		if(!horizontallySplitable) {
-			for(Panel p: children)
+			for(AbstractPanel p: children)
 				if(p.canSetY0PreservingY1(y0)==false)
 					return false;
 		}
 		else {
-			Panel myFirstChild = children.get(0);
+			AbstractPanel myFirstChild = children.get(0);
 			if(myFirstChild.canSetY0PreservingY1(y0)==false)
 				return false;
 		}
@@ -533,13 +533,13 @@ public class ContainerPanel extends Panel {
 	
 	@Override
 	public void hideLabel(Overlay o) {
-		for(Panel p: children)
+		for(AbstractPanel p: children)
 			p.hideLabel(o);
 	}
 	
 	@Override
 	public void hideScalebar(Overlay o) {
-		for(Panel p: children)
+		for(AbstractPanel p: children)
 			p.hideScalebar(o);
 	}
 }

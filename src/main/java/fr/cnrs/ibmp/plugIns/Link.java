@@ -21,7 +21,7 @@ import java.util.Calendar;
 import javax.swing.JFrame;
 
 import fr.cnrs.ibmp.treeMap.LeafPanel;
-import fr.cnrs.ibmp.treeMap.Panel;
+import fr.cnrs.ibmp.treeMap.AbstractPanel;
 import fr.cnrs.ibmp.windows.MainWindow;
 import fr.cnrs.ibmp.dataSets.DataSource;
 import fr.cnrs.ibmp.dataSets.ExternalDataSource;
@@ -145,7 +145,7 @@ public abstract class Link extends JFrame {
 	 * TODO Documentation
 	 */
 	protected void updateActivePanel() {
-		Panel p = mainW.getSelectedPanel();
+		AbstractPanel p = mainW.getSelectedPanel();
 		if (p instanceof LeafPanel) {
 			leafPanel = (LeafPanel) p;
 			dataSource = (ExternalDataSource) leafPanel.getImgData();
@@ -162,8 +162,8 @@ public abstract class Link extends JFrame {
 	 * 
 	 * @return
 	 */
-	protected Panel getActivePanel() {
-		Panel p = mainW.getSelectedPanel();
+	protected AbstractPanel getActivePanel() {
+		AbstractPanel p = mainW.getSelectedPanel();
 		return p;
 	}
 
