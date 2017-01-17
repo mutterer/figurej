@@ -35,6 +35,8 @@ public abstract class AbstractPanel implements Serializable, Panel {
 	protected static int separatorWidth = 7;
 	protected static int minLeafSideLength = 20;
 
+	protected static final String smallSidelengthWarning = ""; //>>   side length fell below minimum! no splitting done.";
+
 	/**
 	 * TODO Documentation
 	 * 

@@ -8,12 +8,16 @@ import java.util.ArrayList;
 /**
  * An invisible panel that can contain leaf panels (i.e. panels that can display
  * an image) or further containers building up a nested structure of
- * {@link AbstractPanel}s. All the elements in a container have either the same height,
- * which makes it a container that can be split vertically, or the same width,
- * such that it can be split horizontally.
+ * {@link AbstractPanel}s.
+ * <p>
+ * All the elements in a container have either the same height, which makes it a
+ * container that can be split vertically, or the same width, such that it can
+ * be split horizontally.
+ * </p>
  * <p>
  * (c) IBMP-CNRS
  * </p>
+ * 
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
@@ -22,7 +26,6 @@ public class ContainerPanel extends AbstractPanel {
 	private static final long serialVersionUID = 1L;
 
 	private boolean horizontallySplitable;
-	private static final String smallSidelengthWarning = ""; //>>   side length fell below minimum! no splitting done.";
 
 	/**
 	 * TODO Documentation
@@ -42,19 +45,39 @@ public class ContainerPanel extends AbstractPanel {
 	}
 
 	/**
-	 * Depending on the on the parameter the panel is either split horizontally or
-	 * vertically. Images are split by shrinking the panel passed as parameter: it
-	 * either loses height or width. the space becoming free is filled with a new
-	 * panel. If containing several images, the panel has a split preference:
-	 * either all his images have to have the same width
-	 * (horizontallySplittable=true) or all of them have the same height. if child
-	 * images of a container are split in the direction that fits to the
-	 * preference, the container shrinks the split image and adds a new one + a
-	 * separator in the free space. else the shrunken image, the new one and the
-	 * separator are added to a new container, which's split preference is set
-	 * polar to the original container's preference; this new container then is
-	 * added as child to the first container, while the shrunken image is removed
-	 * from the original container's children list.
+	 * TODO Documentation
+	 */
+	protected void verticalSplit() {
+		// TODO Implementation
+		throw new UnsupportedOperationException("Not implemented yet");
+	}
+
+	/**
+	 * TODO Documentation
+	 */
+	protected void horizontalSplit() {
+		// TODO Implementation
+		throw new UnsupportedOperationException("Not implemented yet");
+	}
+
+	/**
+	 * Depending on {@code horizontalSplit}, the panel is either split
+	 * horizontally or vertically.
+	 * <p>
+	 * Images are split by shrinking the panel passed as parameter: it either
+	 * loses height or width (depending on {@code horizontalSplit}). The freed
+	 * space is filled with a new panel. If {@code this} has several children, it
+	 * has a split preference: either all children have the same width, thus
+	 * {@code horizontallySplittable==true}, or they have the same height.
+	 * </p>
+	 * <p>
+	 * If children of a container are split in the direction that fits to the
+	 * preference, the container 1) shrinks {@code child0}, 2) adds a new child in
+	 * the freed space, and 3) adds a separator.</p>
+	 * <p>Otherwise: the shrunken image, the new one and the separator are added to a new container, which's split
+	 * preference is set polar to the original container's preference; this new
+	 * container then is added as child to the first container, while the shrunken
+	 * image is removed from the original container's children list.
 	 * 
 	 * @param horizontalSplit if true the panel is split horizontally; else
 	 *          vertically
@@ -66,27 +89,30 @@ public class ContainerPanel extends AbstractPanel {
 		SeparatorPanel separator;
 		ContainerPanel container = new ContainerPanel(child0.getX(), child0.getY(), child0.getW(), child0.getH());
 
-		if(children.size()<=1)
-			horizontallySplitable = horizontalSplit; // set split preference on first split
-		int x1 = child0.getX()+child0.getW()/2 - separatorWidth;
-		int y1 = child0.getY()+child0.getH()/2 - separatorWidth;
+		if (children.size() <= 1) {
+			// set split preference on first split
+			horizontallySplitable = horizontalSplit;
+		}
+		int x1 = child0.getX() + child0.getW() / 2 - separatorWidth;
+		int y1 = child0.getY() + child0.getH() / 2 - separatorWidth;
 
 		if(horizontalSplit) {
 			int child0Y1 = y1; // concerning the child y0 is the y position of the top of the panel, y1 is the lower one
 			int child1Y0 = child0Y1 + separatorWidth;
 
 			int child0Height = child0Y1 - child0.yPos;
-			int child1Height = child0.yPos+child0.panelHeight - child1Y0;
+			int child1Height = child0.yPos + child0.panelHeight - child1Y0;
 
-			if(child0Height<AbstractPanel.minLeafSideLength || child1Height<AbstractPanel.minLeafSideLength)
+			if (child0Height < AbstractPanel.minLeafSideLength ||
+				child1Height < AbstractPanel.minLeafSideLength)
 			{
-				System.out.println(smallSidelengthWarning);
+				System.out.println(AbstractPanel.smallSidelengthWarning);
 				return;
 			}
 
 			child0.panelHeight=(child0Height); // shrink
-			separator 	= new SeparatorPanel(child0.xPos, child0Y1, child0.panelWidth, separatorWidth);
-			child1 		= new LeafPanel(	 child0.xPos, child1Y0, child0.panelWidth, child1Height); // the new image is set below the "splitted" one
+			separator = new SeparatorPanel(child0.xPos, child0Y1, child0.panelWidth, separatorWidth);
+			child1 = new LeafPanel(child0.xPos, child1Y0, child0.panelWidth, child1Height); // the new image is set below the "splitted" one
 		} else {
 			int child0X1 = x1;
 			int child1X0 = child0X1 + separatorWidth;

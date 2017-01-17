@@ -24,10 +24,12 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
 /**
- * Panel that shows an image and contains a link to a {@link DataSource}. It cannot have any children. 
+ * Panel that shows an image and contains a link to a {@link DataSource}. It
+ * cannot have any children.
  * <p>
- * (c) IBMP-CNRS 
+ * (c) IBMP-CNRS
  * </p>
+ * 
  * @author Edda Zinck
  * @author Jerome Mutterer
  */
