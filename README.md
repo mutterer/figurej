@@ -2,6 +2,8 @@ FigureJ
 =======
 This ImageJ plugin allows easy creation of image figures for publications, reports, projects.
 
+Documentation and latest downloads are available at https://imagejdocu.tudor.lu/plugin/utilities/figurej/start
+
 Authors
 =======
 2016-06-09: Welcoming @stelfrich Stefan Helfrich as a contributor.
