@@ -5,14 +5,15 @@
 arg = split(getArgument(),';');
 cmd = arg[0];
 file = arg[1];
+
 inkscapePath = call("ij.Prefs.get", "figurej.inkscapePath","");
+inkscapeCmd = call("ij.Prefs.get", "figurej.inkscapeCmd","");
+
 os = getInfo("os.name");
-binary = "";
 
 if (cmd=="open") {
 	if (indexOf(os,"Win")>-1) {
 		exec(inkscapePath, file);
-
 	} else {
 		exec("open","-a",inkscapePath, file);
 	}
@@ -20,8 +21,17 @@ if (cmd=="open") {
 	
 	outputfile = replace(file,'.svg','.png');
 	if (indexOf(os,"Mac")>-1) {
-		binary = "Contents/Resources/bin/inkscape";
-		success = exec(inkscapePath+File.separator+binary, file, "-C", "--export-png="+outputfile);
+		
+		inkscapeCmd = replace(inkscapeCmd,'SVGFILE', file);
+		inkscapeCmd = replace(inkscapeCmd,'PNGFILE', outputfile);
+				print(inkscapeCmd);
+		
+		args = split(inkscapeCmd,";");
+		
+	
+		print(inkscapePath, file, args[1], args[2],args[3]);
+		success = exec(inkscapePath, file, args[1], args[2],args[3]);
+		
 	} else if (indexOf(os,"Win")>-1) {
 		success = exec(inkscapePath, file, "-C", "--export-png="+outputfile);
 	} else if (indexOf(os,"Lin")>-1) {
